@@ -1,6 +1,6 @@
-# API Portal
+# API Tetris
 
-API para portal de trabajo.
+API para Torneo de Tetris.
 
 ## Requisitos
 
@@ -11,8 +11,8 @@ API para portal de trabajo.
 ### Crear .env
     Crear un archivo ".env" con los siguientes campos:
     ```sh
-    DB_NAME = 'portal'  "dejar por defecto este nombre"
-    DB_HOST = 'hos de la db'
+    DB_NAME = 'tetris'  "dejar por defecto este nombre"
+    DB_HOST = 'host de la db'
     DB_USER = 'usuario de la base de datos'
     DB_PASSWORD = 'password de la base de datos'
     DB_PORT = 'puerto'
@@ -27,8 +27,8 @@ API para portal de trabajo.
 1. Clona el repositorio:
 
     ```sh
-    git clone https://github.com/DanielChachagua/PortalBack.git
-    cd PortalBack
+    git clone https://github.com/Gonzalez-Gaston/Tetris-Byte-Force-BACK.git
+    cd Tetris-Byte-Force-BACK
     ```
 
 2. Crea y activa un entorno virtual:
@@ -49,8 +49,8 @@ API para portal de trabajo.
 1. Clona el repositorio:
 
     ```sh
-    git clone https://github.com/DanielChachagua/PortalBack.git
-    cd PortalBack
+    git clone https://github.com/Gonzalez-Gaston/Tetris-Byte-Force-BACK.git
+    cd Tetris-Byte-Force-BACK
     ```
 
 2. Crea y activa un entorno virtual:
@@ -86,6 +86,12 @@ python main.py
 
 Una vez iniciada la aplicación dirigirse a para ver la documentacion:
 
+Documentacion Swagger
 ```sh
 http://127.0.0.1:8000
+```
+
+Documentación Redoc 
+```sh
+http://127.0.0.1:8000/redoc
 ```

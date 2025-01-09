@@ -6,6 +6,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from src.database.db import db
 import logging
 from src.routers.user_router import user_router
+from src.middleware.auth_middleware import AuthMiddleware
+from src.services.auth_service import AuthService
 
 # db = DataBase()
 
@@ -36,6 +38,8 @@ app.add_middleware(
 )
 
 app.add_middleware(TimingMiddleware)
+
+# app.add_middleware(AuthMiddleware)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

@@ -8,6 +8,8 @@ from fastapi.security import OAuth2PasswordBearer
 from src.models.user_model import User
 from src.database.db import db
 from typing import Annotated
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request
 
 oauth_scheme = OAuth2PasswordBearer(tokenUrl='/auth')
 
