@@ -43,7 +43,8 @@ class DataBase:
     async def connect(self):
         try:
             logging.info('Conectando a la base de datos...')
-            await self.engine.connect()
+            async with self.engine.connect() as conn:
+                await conn.run_sync(lambda conn: None)  # Test connection
             logging.info('Conexión exitosa')
         except Exception as e:
             logging.error(f'Error al conectar a la base de datos: {e}')
