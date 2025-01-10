@@ -23,10 +23,10 @@ starlette==0.41.3
 typing_extensions==4.12.2
 uvicorn==0.34.0
 
-NIXPACKS_PYTHON_VERSION="3.12.3"
-SECRET_KEY="l5=44q6#=xgr__t_1!89wa!^ivfa!nn(3ydtee6kx!-)yd*54b"
-DB_NAME="tetris"
-DB_HOST="localhost"
-DB_USER="root"
-DB_PASSWORD="Qwer1234*"
-DB_PORT="3306"
+# NIXPACKS_PYTHON_VERSION="3.12.3"
+# SECRET_KEY="l5=44q6#=xgr__t_1!89wa!^ivfa!nn(3ydtee6kx!-)yd*54b"
+# DB_NAME="tetris"
+# DB_HOST="localhost"
+# DB_USER="root"
+# DB_PASSWORD="Qwer1234*"
+# DB_PORT="3306"
