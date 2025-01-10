@@ -1,4 +1,4 @@
-# aiomysql==0.2.0
+aiomysql==0.2.0
 aiosqlite==0.20.0
 annotated-types==0.7.0
 anyio==4.7.0
@@ -13,7 +13,7 @@ idna==3.10
 pydantic==2.10.4
 pydantic_core==2.27.2
 PyJWT==2.10.1
-# PyMySQL==1.1.1
+PyMySQL==1.1.1
 python-decouple==3.8
 python-multipart==0.0.20
 sniffio==1.3.1
@@ -22,3 +22,11 @@ sqlmodel==0.0.22
 starlette==0.41.3
 typing_extensions==4.12.2
 uvicorn==0.34.0
+
+NIXPACKS_PYTHON_VERSION="3.12.3"
+SECRET_KEY="l5=44q6#=xgr__t_1!89wa!^ivfa!nn(3ydtee6kx!-)yd*54b"
+DB_NAME="tetris"
+DB_HOST="localhost"
+DB_USER="root"
+DB_PASSWORD="Qwer1234*"
+DB_PORT="3306"
