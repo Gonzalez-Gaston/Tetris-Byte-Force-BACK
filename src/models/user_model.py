@@ -10,7 +10,7 @@ class User(SQLModel, table=True):
     password_hash: str = Field(max_length=100)
     first_name: str = Field(max_length=50)
     last_name: str = Field(max_length=50)
-    date_of_birth: date
+    date_of_birth: date = Field()
     url_image: str | None = Field(default=None)
     is_active: bool = Field(default=False)
     token: uuid.UUID | None = Field(default_factory=lambda: uuid.uuid4())

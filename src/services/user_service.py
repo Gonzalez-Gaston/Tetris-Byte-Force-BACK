@@ -1,8 +1,9 @@
-from datetime import date
+from datetime import date, datetime, timedelta, timezone
 from uuid import UUID
 import bcrypt
 from fastapi import APIRouter, HTTPException, status
 from src import db
+from src.models.refresh_token import HistorialRefreshToken
 from src.models.user_model import User
 from src.schemas.user_schema.user_create import UserCreate
 from sqlmodel import select, or_
@@ -34,10 +35,19 @@ class UserService:
                     status_code=status.HTTP_404_NOT_FOUND
                 )
             
-            token = await AuthService().auth(user)
+            token = await AuthService().get_token(user)
+
+            # Create a new dictionary based on the token dictionary
+            sttmt_rt = token.copy()
+            sttmt_rt['user_id'] = user.id
+            sttmt_rt['expired_at'] = datetime.now(timezone.utc) + timedelta(days=7)
+
+            self.session.add(HistorialRefreshToken(**sttmt_rt))
+
+            await self.session.commit()
 
             return JSONResponse(
-                content={"token": token},
+                content=token,
                 status_code=status.HTTP_200_OK
             )
 
@@ -104,8 +114,46 @@ class UserService:
         statement = select(User).where(User.username == username)
         exist = await self.session.exec(statement)
         user: User | None = exist.first()
-        return user is None 
+        return user is None
+    
+    async def refresh_token(self, user: User, token: str, refresh_token: str):
+        try:
+            statement = select(HistorialRefreshToken).where(
+                HistorialRefreshToken.user_id == user.id,
+                HistorialRefreshToken.refresh_token == refresh_token,
+                HistorialRefreshToken.token == token
+            )
+            historial_rt: HistorialRefreshToken | None = (await self.session.exec(statement)).first()
 
-    
-    
-    
+            if not historial_rt:
+                return JSONResponse(
+                    status_code=status.HTTP_401_UNAUTHORIZED, 
+                    content={'detail':'Credenciales no encontradas'}
+                )
+
+            rt_decode = await AuthService().decode_token(refresh_token)
+
+            if rt_decode == False:
+                await self.session.delete(historial_rt)
+                await self.session.commit()
+
+                return JSONResponse(
+                    status_code=status.HTTP_401_UNAUTHORIZED, 
+                    content={'detail':'Refresh token expirado.'}
+                )
+
+            new_token = await AuthService().create_token(user)
+            new_refresh_token = await AuthService().create_refresh_token(user)
+
+            historial_rt.token = new_token
+            historial_rt.refresh_token = new_refresh_token
+
+            await self.session.commit()
+
+            return {"token": new_token, "refresh_token": new_refresh_token}
+
+        except Exception as e:
+            raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, 'Error al actualizar el token.')
+
+
+
