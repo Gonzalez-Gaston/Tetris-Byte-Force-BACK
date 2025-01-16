@@ -21,19 +21,15 @@ def authorization(roles: List[str]):
         async def wrapper(
             *args, 
             # request: Request,
-            token: str,
-            session: AsyncSession,
+            user: User,
             **kwargs
         ):
-            user: User = await auth_service.get_current_user(token, session)
-
             if user.role not in roles:
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail="No tienes permiso para acceder a este recurso",
                 )
 
-            kwargs["user"] = user
-            return await func(*args, **kwargs)
+            return await func(*args, **kwargs, user=user) 
         return wrapper
     return decorator

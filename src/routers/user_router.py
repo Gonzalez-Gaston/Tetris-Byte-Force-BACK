@@ -14,6 +14,8 @@ user_router = APIRouter(prefix='/users', tags=['User'])
 
 auth = AuthService()
 
+############################### POST ###############################
+
 @user_router.post('/create_participant')
 async def create_user(
     user: ParticipantCreate,
@@ -35,12 +37,26 @@ async def login(
 ):
     return await UserService(session).login(credentials)
 
+@user_router.post('/refresh_token')
+async def refresh_token(
+    refresh_token: str =  Form(),
+    user: tuple | bool = Depends(auth.get_user_refresh_token), 
+    session: AsyncSession = Depends(db.get_session),
+):
+    if user == False:
+        return JSONResponse(
+            headers={"WWW-Authenticate": "Bearer"},
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content={'detail':'Token no caducado'}
+        )
+    return await UserService(session).refresh_token(user[0], user[1], refresh_token)
+
+############################### GET ###############################
+
 @user_router.get('/me') 
 @authorization(roles=[RoleUser.PARTICIPANT, RoleUser.ORGANIZER])
 async def user( 
-    token: str = Depends(oauth_scheme), 
-    session: AsyncSession = Depends(db.get_session),
-    user: User = None, 
+    user: User = Depends(auth.get_current_user), 
 ): 
     user_data = user
     return user_data
@@ -59,17 +75,5 @@ async def validate_email(
 ):
     return await UserService(session).validate_username(username)
 
-@user_router.post('/refresh_token')
-async def refresh_token(
-    refresh_token: str =  Form(),
-    user: tuple | bool = Depends(auth.get_user_refresh_token), 
-    session: AsyncSession = Depends(db.get_session),
-):
-    if user == False:
-        return JSONResponse(
-            headers={"WWW-Authenticate": "Bearer"},
-            status_code=status.HTTP_400_BAD_REQUEST,
-            content={'detail':'Token no caducado'}
-        )
-    return await UserService(session).refresh_token(user[0], user[1], refresh_token)
+
 
