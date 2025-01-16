@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta, timezone
 from uuid import UUID
 from fastapi import Depends, HTTPException, status
-from fastapi.responses import JSONResponse
 from sqlmodel.ext.asyncio.session import AsyncSession
 import jwt
 from decouple import config
@@ -9,13 +8,8 @@ from fastapi.security import OAuth2PasswordBearer
 from src.models.user_model import User
 from src.database.db import db
 from typing import Annotated
-from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.requests import Request
-import secrets
-import base64
 
 oauth_scheme = OAuth2PasswordBearer(tokenUrl='/auth')
-
 
 class AuthService:
     def __init__(self, session: AsyncSession = None):
@@ -32,6 +26,7 @@ class AuthService:
         data = {
             'user_id': str(user.id),
             'email': user.email,
+            'role': user.role,
             'expire': expire.isoformat()  # Convert datetime to ISO format string
         }
         encoded_jwt = jwt.encode(data, config('SECRET_KEY'), algorithm="HS256")

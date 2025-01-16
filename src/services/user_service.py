@@ -3,8 +3,12 @@ from uuid import UUID
 import bcrypt
 from fastapi import APIRouter, HTTPException, status
 from src import db
+from src.models.organizer_model import Organizer
+from src.models.participant_model import Participant
 from src.models.refresh_token import HistorialRefreshToken
-from src.models.user_model import User
+from src.models.user_model import RoleUser, User
+from src.schemas.organizer_schemas.organizer_create import OrganizerCreate
+from src.schemas.participant_schemas.participant_create import ParticipantCreate
 from src.schemas.user_schema.user_create import UserCreate
 from sqlmodel import select, or_
 from sqlmodel.ext.asyncio.session import AsyncSession
@@ -40,7 +44,7 @@ class UserService:
             # Create a new dictionary based on the token dictionary
             sttmt_rt = token.copy()
             sttmt_rt['user_id'] = user.id
-            sttmt_rt['expired_at'] = datetime.now(timezone.utc) + timedelta(days=7)
+            sttmt_rt['expire'] = datetime.now(timezone.utc) + timedelta(days=7)
 
             self.session.add(HistorialRefreshToken(**sttmt_rt))
 
@@ -54,7 +58,7 @@ class UserService:
         except Exception as e:
             raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "Error al intentar loguear")
 
-    async def create_user(self, user: UserCreate):
+    async def create_participant(self, user: ParticipantCreate):
             try:
                 statement= select(User).where(or_(User.username == user.username , User.email == user.email))
                                             
@@ -76,6 +80,56 @@ class UserService:
                 new_user: User = User(**user.model_dump())
 
                 self.session.add(new_user)
+                await self.session.commit()
+
+                new_participant: Participant = Participant(
+                    first_name= user.first_name,
+                    last_name= user.last_name,
+                    date_of_birth= user.date_of_birth,
+                    user_id= new_user.id
+                )
+
+                self.session.add(new_participant)
+                await self.session.commit()
+
+                return JSONResponse(
+                            status_code=status.HTTP_201_CREATED, 
+                            content={"detail": "Usuario creado exitosamente."}
+                            )
+            except Exception as e:
+                raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, 'Error al crear usuario.')
+            
+    async def create_organizer(self, user: OrganizerCreate):
+            try:
+                statement= select(User).where(or_(User.username == user.username , User.email == user.email))
+                                            
+                result = await self.session.exec(statement)
+                user_exist: User | None = result.first()
+                
+                if(user_exist != None):
+                    if user_exist.username == user.username:
+                        return JSONResponse(
+                            status_code=status.HTTP_409_CONFLICT, 
+                            content={"detail": "El username ya se encuentra en uso"}
+                            )
+                    if user_exist.email == user.email:
+                        return JSONResponse(
+                            status_code=status.HTTP_409_CONFLICT, 
+                            content={"detail": "El email ya existe."}
+                            )
+
+                new_user: User = User(**user.model_dump(), role= RoleUser.ORGANIZER)
+
+                self.session.add(new_user)
+                await self.session.commit()
+
+                new_organizer: Organizer = Organizer(
+                    name= user.name,
+                    description= user.description,
+                    user_id= new_user.id
+                )
+
+                self.session.add(new_organizer)
                 await self.session.commit()
 
                 return JSONResponse(

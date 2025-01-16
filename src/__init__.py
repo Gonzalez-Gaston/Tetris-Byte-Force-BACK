@@ -45,11 +45,11 @@ app.add_middleware(TimingMiddleware)
 async def lifespan(app: FastAPI):
     if db.is_closed():
         try:
+            await db.create_database_if_not_exists()   #QUITAR ESTA LINEA PARA MYSQL
             await db.connect()
         except Exception as e:
             logging.error(f"Error al conectar a la base de datos: {e}")
             raise e
-    # await db.create_database_if_not_exists()   #QUITAR ESTA LINEA PARA MYSQL
     await db.create_tables()
 
     yield
