@@ -14,8 +14,8 @@ class TournamentCreate(BaseModel):
 
     @field_validator('number_participants')
     def username_validator(cls, number_participants):
-        if number_participants < 4:
-           raise ValueError('El numero de participantes debe de ser de al menos 4')
+        if number_participants < 8:
+           raise ValueError('El numero de participantes debe de ser de al menos 8')
         if number_participants > 64:
            raise ValueError('El numero de participantes no debe de ser mayor a 64')
         if (number_participants & (number_participants - 1)) != 0:

@@ -11,7 +11,6 @@ class TournamentParticipants(SQLModel, table=True):
     final_position: int = Field()
     points: int = Field()
     end: datetime | None = Field()
-    value_point: float | None = Field()
     participant: Optional["Participant"] = Relationship(back_populates="tournaments")
     tournament: Optional["Tournament"] = Relationship(back_populates="participants")
 
