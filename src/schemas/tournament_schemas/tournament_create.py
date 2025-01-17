@@ -15,7 +15,7 @@ class TournamentCreate(BaseModel):
 
     @field_validator('description')
     def description_validator(cls, description):
-        if description < 20:
+        if len(description) < 20:
            raise ValueError('La descripción debe de contener al menos 20 carácteres')
         return description
 
