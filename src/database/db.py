@@ -8,7 +8,8 @@ from decouple import config
 import logging
 import aiomysql
 
-DATABASE_URL="mysql+aiomysql://root:VoqaYLgyBzCMCoalGStvRsyNOdgCMCBD@autorack.proxy.rlwy.net:28956/railway"
+DATABASE_URL="mysql+aiomysql://root:YeorsGTTacntTqCoYlVeMnwiwOUMiNTg@junction.proxy.rlwy.net:25545/railway"
+
 class DataBase:
     def __init__(self):
         self.__host = config('DB_HOST')
@@ -61,7 +62,12 @@ class DataBase:
     async def create_tables(self):
         try:
             logging.info('Validando tablas...')
-            from src.models.user_model import User
+            from src.models.refresh_token import HistorialRefreshToken
+            from src.models.organizer_model import Organizer
+            from src.models.participant_model import Participant
+            from src.models.tournaments import Tournament
+            from src.models.tournament_participants import TournamentParticipants
+
             async with self.engine.begin() as conn:
                 await conn.run_sync(SQLModel.metadata.create_all)
             logging.info('Tablas validadas')
@@ -122,9 +128,12 @@ db = DataBase()
 #         try:
 #             logging.info('Validando tablas...')
 #             from src.models.user_model import User
-#             from src.models.category_model import Category
-#             from src.models.company_model import Company
-#             from src.models.company_category import CompanyCategory
+#             from src.models.refresh_token import HistorialRefreshToken
+#             from src.models.organizer_model import Organizer
+#             from src.models.participant_model import Participant
+#             from src.models.tournaments import Tournament
+#             from src.models.tournament_participants import TournamentParticipants
+
 #             async with self.engine.begin() as conn:
 #                 await conn.run_sync(SQLModel.metadata.create_all)
 #             logging.info('Tablas validadas')

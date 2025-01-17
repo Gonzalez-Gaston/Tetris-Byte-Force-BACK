@@ -6,9 +6,11 @@ from src import db
 from src.models.organizer_model import Organizer
 from src.models.participant_model import Participant
 from src.models.refresh_token import HistorialRefreshToken
+from src.models.tournaments import Tournament
 from src.models.user_model import RoleUser, User
 from src.schemas.organizer_schemas.organizer_create import OrganizerCreate
 from src.schemas.participant_schemas.participant_create import ParticipantCreate
+from src.schemas.tournament_schemas.tournament_create import TournamentCreate
 from src.schemas.user_schema.user_create import UserCreate
 from sqlmodel import select, or_
 from sqlmodel.ext.asyncio.session import AsyncSession
@@ -16,44 +18,31 @@ from fastapi.responses import JSONResponse
 from src.schemas.user_schema.user_credentials import UserCredentials
 from src.services.auth_service import AuthService
 
-class UserService:
+user_router = APIRouter()
+
+class OrganizerService:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def login(self, credentials:UserCredentials):
+    async def create_tournament(self, tournament: TournamentCreate, user: User):
         try:
-            statement = select(User).where(User.email == credentials.email)
-            user: User | None = (await self.session.exec(statement)).first()
+            sttmt = select(Organizer).where(Organizer.user_id == user.id)
+            result = await self.session.exec(sttmt)
+            organizer: Organizer | None = result.first()
 
-            if user is None:
-                return JSONResponse(
-                    content={"detail": "Credenciales incorrectas"},
-                    status_code=status.HTTP_404_NOT_FOUND
-                )
-            
-            if self.verify_password(credentials.password, user.password_hash) == False:
-                return JSONResponse(
-                    content={"detail": "Credenciales incorrectas"},
-                    status_code=status.HTTP_404_NOT_FOUND
-                )
-            
-            token = await AuthService().get_token(user)
+            new_tournament: Tournament = Tournament(**tournament.model_dump(), data = "", organizer_id= organizer.id)
 
-            sttmt_rt = token.copy()
-            sttmt_rt['user_id'] = user.id
-            sttmt_rt['expire'] = datetime.now(timezone.utc) + timedelta(days=7)
-
-            self.session.add(HistorialRefreshToken(**sttmt_rt))
+            self.session.add(new_tournament)
 
             await self.session.commit()
 
             return JSONResponse(
-                content=token,
-                status_code=status.HTTP_200_OK
+                content={"detail":"Torneo creado con éxito!"},
+                status_code=status.HTTP_201_CREATED
             )
 
         except Exception as e:
-            raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "Error al intentar loguear")
+            raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "Error al intentar crear torneo")
 
     async def create_participant(self, user: ParticipantCreate):
             try:

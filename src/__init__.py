@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from src.database.db import db
 import logging
 from src.routers.user_router import user_router
+from src.routers.organizer_router import organizer_router
 from src.middleware.auth_middleware import AuthMiddleware
 from src.services.auth_service import AuthService
 
@@ -20,6 +21,7 @@ app = FastAPI(title= 'API Portal',
             )
 
 app.include_router(router= user_router)
+app.include_router(router= organizer_router)
 
 origins = [
     # "http://localhost.tiangolo.com",
@@ -45,11 +47,11 @@ app.add_middleware(TimingMiddleware)
 async def lifespan(app: FastAPI):
     if db.is_closed():
         try:
+            await db.create_database_if_not_exists()   #QUITAR ESTA LINEA PARA MYSQL
             await db.connect()
         except Exception as e:
             logging.error(f"Error al conectar a la base de datos: {e}")
             raise e
-    # await db.create_database_if_not_exists()   #QUITAR ESTA LINEA PARA MYSQL
     await db.create_tables()
 
     yield

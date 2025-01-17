@@ -1,6 +1,12 @@
 from datetime import date, datetime, timezone
+from enum import Enum
 from sqlmodel import SQLModel, Field
+from sqlalchemy import Column, Enum as SQLAlchemyEnum
 import uuid
+
+class RoleUser(str, Enum):
+    PARTICIPANT = "participant"
+    ORGANIZER = "organizer"
 
 class User(SQLModel, table=True):
     __tablename__ = 'users'
@@ -8,9 +14,7 @@ class User(SQLModel, table=True):
     username: str = Field(max_length=50, unique=True)
     email: str = Field(max_length=50, unique=True, index=True)
     password_hash: str = Field(max_length=100)
-    first_name: str = Field(max_length=50)
-    last_name: str = Field(max_length=50)
-    date_of_birth: date
+    role: str = Field(sa_column=Column(SQLAlchemyEnum(RoleUser)), default=RoleUser.PARTICIPANT)
     url_image: str | None = Field(default=None)
     is_active: bool = Field(default=False)
     token: uuid.UUID | None = Field(default_factory=lambda: uuid.uuid4())
