@@ -141,14 +141,10 @@ class UserService:
         return bcrypt.checkpw(password.encode('utf-8'), hashed_password.encode('utf-8'))
     
     async def me(self, user: User):
-        # Convertir campos de tipo date a string
         user_dict = user.model_dump()
         for key, value in user_dict.items():
             if isinstance(value, date):
                 user_dict[key] = value.isoformat()
-            
-            if isinstance(value, UUID):
-                user_dict[key] = str(value)
 
         return JSONResponse(
             status_code=status.HTTP_200_OK, 

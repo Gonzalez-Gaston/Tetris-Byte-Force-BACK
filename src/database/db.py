@@ -8,7 +8,7 @@ from decouple import config
 import logging
 import aiomysql
 
-DATABASE_URL="mysql+aiomysql://root:YeorsGTTacntTqCoYlVeMnwiwOUMiNTg@junction.proxy.rlwy.net:25545/railway"
+DATABASE_URL="mysql+aiomysql://root:CphonlFzZVNllhtZKpUoQrrQriNtyzRg@junction.proxy.rlwy.net:11558/railway"
 
 class DataBase:
     def __init__(self):
@@ -90,7 +90,7 @@ db = DataBase()
 
 
 
-# SQLITE
+# # SQLITE
 
 
 # from sqlmodel import SQLModel
@@ -127,7 +127,6 @@ db = DataBase()
 #     async def create_tables(self):
 #         try:
 #             logging.info('Validando tablas...')
-#             from src.models.user_model import User
 #             from src.models.refresh_token import HistorialRefreshToken
 #             from src.models.organizer_model import Organizer
 #             from src.models.participant_model import Participant
