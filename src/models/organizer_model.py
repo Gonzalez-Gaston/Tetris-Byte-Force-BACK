@@ -3,7 +3,7 @@ import uuid
 
 class Organizer(SQLModel, table=True):
     __tablename__ = 'organizers'
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True)
     name: str = Field(max_length=100)
-    description: str = Field()
-    user_id: uuid.UUID = Field(foreign_key='users.id', index=True)
+    description: str | None = Field(default=None)
+    user_id: str = Field(foreign_key='users.id')

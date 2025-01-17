@@ -5,6 +5,7 @@ from src.models.tournaments import TypeTournament, StatusTournament
 
 class TournamentCreate(BaseModel):
     name: str
+    description: str
     type: TypeTournament
     status: StatusTournament
     number_participants: int
@@ -12,8 +13,14 @@ class TournamentCreate(BaseModel):
     start: datetime
     end: datetime
 
+    @field_validator('description')
+    def description_validator(cls, description):
+        if description < 20:
+           raise ValueError('La descripción debe de contener al menos 20 carácteres')
+        return description
+
     @field_validator('number_participants')
-    def username_validator(cls, number_participants):
+    def number_participants_validator(cls, number_participants):
         if number_participants < 8:
            raise ValueError('El numero de participantes debe de ser de al menos 8')
         if number_participants > 64:

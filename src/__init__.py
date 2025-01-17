@@ -7,6 +7,7 @@ from src.database.db import db
 import logging
 from src.routers.user_router import user_router
 from src.routers.organizer_router import organizer_router
+from src.routers.tournament_router import tournament_router
 from src.middleware.auth_middleware import AuthMiddleware
 from src.services.auth_service import AuthService
 
@@ -22,6 +23,7 @@ app = FastAPI(title= 'API Portal',
 
 app.include_router(router= user_router)
 app.include_router(router= organizer_router)
+app.include_router(router= tournament_router)
 
 origins = [
     # "http://localhost.tiangolo.com",

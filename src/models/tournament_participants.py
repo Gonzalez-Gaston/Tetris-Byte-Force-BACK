@@ -5,9 +5,9 @@ import uuid
 
 class TournamentParticipants(SQLModel, table=True):
     __tablename__ = 'tournament_participants'
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    participant_id: uuid.UUID = Field(foreign_key='participants.id', index=True)
-    tournament_id: uuid.UUID = Field(foreign_key='tournaments.id')
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True)
+    participant_id: str = Field(foreign_key='participants.id', index=True)
+    tournament_id: str = Field(foreign_key='tournaments.id')
     final_position: int = Field()
     points: int = Field()
     end: datetime | None = Field()

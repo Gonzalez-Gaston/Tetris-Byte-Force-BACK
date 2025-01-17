@@ -44,156 +44,18 @@ class OrganizerService:
         except Exception as e:
             raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "Error al intentar crear torneo")
 
-    async def create_participant(self, user: ParticipantCreate):
-            try:
-                statement= select(User).where(or_(User.username == user.username , User.email == user.email))
-                                            
-                result = await self.session.exec(statement)
-                user_exist: User | None = result.first()
+    # async def update_data_tournamen(self, tournament_id: str, data: str, user_id: str):
+    #     try:
+    #         sttmt_org = select(Organizer).where(Organizer.user_id == user_id)
+    #         organizer: Organizer | None = (await self.session.exec(sttmt_org)).first()
+
+    #         if organizer is None:
                 
-                if(user_exist != None):
-                    if user_exist.username == user.username:
-                        return JSONResponse(
-                            status_code=status.HTTP_409_CONFLICT, 
-                            content={"detail": "El username ya se encuentra en uso"}
-                            )
-                    if user_exist.email == user.email:
-                        return JSONResponse(
-                            status_code=status.HTTP_409_CONFLICT, 
-                            content={"detail": "El email ya existe."}
-                            )
 
-                new_user: User = User(**user.model_dump())
+    #         sttmt = select(Tournament).where(Tournament.id == tournament_id, Tournament.organizer_id == organizer.id)
+    #         tournament: Tournament | None = (await self.session.exec(sttmt)).first()
+        
+    #     except Exception as e:
+    #         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "Error al intentar actualizar torneo")
 
-                self.session.add(new_user)
-                await self.session.commit()
-
-                new_participant: Participant = Participant(
-                    first_name= user.first_name,
-                    last_name= user.last_name,
-                    date_of_birth= user.date_of_birth,
-                    user_id= new_user.id
-                )
-
-                self.session.add(new_participant)
-                await self.session.commit()
-
-                return JSONResponse(
-                            status_code=status.HTTP_201_CREATED, 
-                            content={"detail": "Usuario creado exitosamente."}
-                            )
-            except Exception as e:
-                raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, 'Error al crear usuario.')
-            
-    async def create_organizer(self, user: OrganizerCreate):
-            try:
-                statement= select(User).where(or_(User.username == user.username , User.email == user.email))
-                                            
-                result = await self.session.exec(statement)
-                user_exist: User | None = result.first()
-                
-                if(user_exist != None):
-                    if user_exist.username == user.username:
-                        return JSONResponse(
-                            status_code=status.HTTP_409_CONFLICT, 
-                            content={"detail": "El username ya se encuentra en uso"}
-                            )
-                    if user_exist.email == user.email:
-                        return JSONResponse(
-                            status_code=status.HTTP_409_CONFLICT, 
-                            content={"detail": "El email ya existe."}
-                            )
-
-                new_user: User = User(**user.model_dump(), role= RoleUser.ORGANIZER)
-
-                self.session.add(new_user)
-                await self.session.commit()
-
-                new_organizer: Organizer = Organizer(
-                    name= user.name,
-                    description= user.description,
-                    user_id= new_user.id
-                )
-
-                self.session.add(new_organizer)
-                await self.session.commit()
-
-                return JSONResponse(
-                            status_code=status.HTTP_201_CREATED, 
-                            content={"detail": "Usuario creado exitosamente."}
-                            )
-            except Exception as e:
-                raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, 'Error al crear usuario.')
     
-    @classmethod
-    def verify_password(cls, password: str, hashed_password: str) -> bool:
-        return bcrypt.checkpw(password.encode('utf-8'), hashed_password.encode('utf-8'))
-    
-    async def me(self, user: User):
-        # Convertir campos de tipo date a string
-        user_dict = user.model_dump()
-        for key, value in user_dict.items():
-            if isinstance(value, date):
-                user_dict[key] = value.isoformat()
-            
-            if isinstance(value, UUID):
-                user_dict[key] = str(value)
-
-        return JSONResponse(
-            status_code=status.HTTP_200_OK, 
-            content=user_dict
-        )
-    
-    async def validate_email(self, email: str):
-        statement = select(User).where(User.email == email)
-        exist = await self.session.exec(statement)
-        user: User | None = exist.first()
-        return user is None 
-    
-    async def validate_username(self, username: str):
-        statement = select(User).where(User.username == username)
-        exist = await self.session.exec(statement)
-        user: User | None = exist.first()
-        return user is None
-    
-    async def refresh_token(self, user: User, token: str, refresh_token: str):
-        try:
-            statement = select(HistorialRefreshToken).where(
-                HistorialRefreshToken.user_id == user.id,
-                HistorialRefreshToken.refresh_token == refresh_token,
-                HistorialRefreshToken.token == token
-            )
-            historial_rt: HistorialRefreshToken | None = (await self.session.exec(statement)).first()
-
-            if not historial_rt:
-                return JSONResponse(
-                    status_code=status.HTTP_401_UNAUTHORIZED, 
-                    content={'detail':'Credenciales no encontradas'}
-                )
-
-            rt_decode = await AuthService().decode_token(refresh_token)
-
-            if rt_decode == False:
-                await self.session.delete(historial_rt)
-                await self.session.commit()
-
-                return JSONResponse(
-                    status_code=status.HTTP_401_UNAUTHORIZED, 
-                    content={'detail':'Refresh token expirado.'}
-                )
-
-            new_token = await AuthService().create_token(user)
-            new_refresh_token = await AuthService().create_refresh_token(user)
-
-            historial_rt.token = new_token
-            historial_rt.refresh_token = new_refresh_token
-
-            await self.session.commit()
-
-            return {"token": new_token, "refresh_token": new_refresh_token}
-
-        except Exception as e:
-            raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, 'Error al actualizar el token.')
-
-
-
