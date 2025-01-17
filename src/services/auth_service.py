@@ -27,6 +27,7 @@ class AuthService:
             'user_id': user.id,
             'username': user.username,
             'email': user.email,
+            'role': user.role,
             'expire': expire.isoformat()  # Convert datetime to ISO format string
         }
         encoded_jwt = jwt.encode(data, config('SECRET_KEY'), algorithm="HS256")
