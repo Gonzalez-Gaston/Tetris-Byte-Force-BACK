@@ -3,16 +3,31 @@ from typing import List
 from fastapi import HTTPException, status
 from src.models.tournament_participants import TournamentParticipants
 from src.models.tournaments import StatusTournament, Tournament
+from src.schemas.tournament_schemas.tournament_create import TournamentCreate
 from src.schemas.tournament_schemas.tournament_response import TournamentResponse
 from sqlmodel import select, or_
 from sqlmodel.ext.asyncio.session import AsyncSession
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import selectinload
 
+from src.schemas.user_schema.user_full import UserFull
+
 
 class TournamentService:
     def __init__(self, session: AsyncSession):
         self.session = session
+
+    async def create_tournament(self, tournament: TournamentCreate, user: UserFull):
+        try:
+            new_tournament: Tournament = Tournament(**tournament.model_dump(), data = "", organizer_id= user.full.id)
+            self.session.add(new_tournament)
+            await self.session.commit()
+            return JSONResponse(
+                content={"detail":"Torneo creado con éxito!"},
+                status_code=status.HTTP_201_CREATED
+            )
+        except Exception as e:
+            raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "Error al intentar crear torneo")
 
     async def get_all_tournaments(self, status_filter: StatusTournament | None):
         try:
