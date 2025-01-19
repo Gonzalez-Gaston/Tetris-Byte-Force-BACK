@@ -76,6 +76,7 @@ class UserService:
 
                 new_user: User = User(**user.model_dump())
                 self.session.add(new_user)
+                await self.session.flush()
 
                 new_participant: Participant = Participant(
                     first_name= user.first_name,
@@ -115,6 +116,7 @@ class UserService:
 
                 new_user: User = User(**user.model_dump(), role= RoleUser.ORGANIZER)
                 self.session.add(new_user)
+                await self.session.flush()
 
                 new_organizer: Organizer = Organizer(
                     name= user.name,
