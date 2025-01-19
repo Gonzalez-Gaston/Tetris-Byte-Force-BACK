@@ -4,6 +4,7 @@ from typing import Callable, List
 from fastapi import HTTPException, status
 from src.models.user_model import User
 from src.database.db import db
+from src.schemas.user_schema.user_full import UserFull
 from src.services.auth_service import AuthService
 from sqlmodel.ext.asyncio.session import AsyncSession
 from fastapi.security import OAuth2PasswordBearer
@@ -20,11 +21,10 @@ def authorization(roles: List[str]):
         @wraps(func)
         async def wrapper(
             *args, 
-            # request: Request,
-            user: User,
+            user: UserFull,
             **kwargs
         ):
-            if user.role not in roles:
+            if user.user.role not in roles:
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail="No tienes permiso para acceder a este recurso",

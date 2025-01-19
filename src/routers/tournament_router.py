@@ -11,6 +11,7 @@ from src.schemas.participant_schemas.participant_create import ParticipantCreate
 from src.schemas.tournament_schemas.tournament_create import TournamentCreate
 from src.schemas.tournament_schemas.tournament_response import TournamentResponse
 from src.schemas.user_schema.user_credentials import UserCredentials
+from src.schemas.user_schema.user_full import UserFull
 from src.services.auth_service import AuthService, oauth_scheme
 from src.services.tournament_service import TournamentService
 from src.services.user_service import UserService
@@ -19,10 +20,24 @@ tournament_router = APIRouter(prefix='/tournament', tags=['Tournament'])
 
 auth = AuthService()
 
+############################### POST ###############################
+
+@tournament_router.post('/create_tournament')
+@authorization(roles=[RoleUser.ORGANIZER])
+async def create_user(
+    tournament: TournamentCreate,
+    user: UserFull = Depends(auth.get_current_user),
+    session: AsyncSession = Depends(db.get_session),
+):
+    return await TournamentService(session).create_tournament(tournament, user)
+
+
+############################### GET ###############################
+
 @tournament_router.get('/get_all_tournaments')
 @authorization(roles=[RoleUser.ORGANIZER, RoleUser.PARTICIPANT])
 async def get_all_tournaments(
-    user: User = Depends(auth.get_current_user),
+    user: UserFull = Depends(auth.get_current_user),
     session: AsyncSession = Depends(db.get_session),
     status_filter: StatusTournament | None = Query(None)
 ):
@@ -31,7 +46,7 @@ async def get_all_tournaments(
 @tournament_router.get('/get_name_tournaments')
 @authorization(roles=[RoleUser.ORGANIZER, RoleUser.PARTICIPANT])
 async def get_name_tournaments(
-    user: User = Depends(auth.get_current_user),
+    user: UserFull = Depends(auth.get_current_user),
     session: AsyncSession = Depends(db.get_session),
     name_filter: str = Query(None, min_length=3, description="El nombre debe tener al menos 3 caracteres")
 ):
@@ -41,7 +56,19 @@ async def get_name_tournaments(
 @authorization(roles=[RoleUser.ORGANIZER, RoleUser.PARTICIPANT])
 async def get_name_tournaments(
     id: str,
-    user: User = Depends(auth.get_current_user),
+    user: UserFull = Depends(auth.get_current_user),
     session: AsyncSession = Depends(db.get_session),
 ):
     return await TournamentService(session).get_tournament(id)
+
+############################### PUT ###############################
+
+@tournament_router.put('/update_status/{tournament_id}')
+@authorization(roles=[RoleUser.ORGANIZER])
+async def update_status(
+    tournament_id: str,
+    status_tour: StatusTournament = Query(...),
+    user: UserFull = Depends(auth.get_current_user),
+    session: AsyncSession = Depends(db.get_session),
+):
+    return await TournamentService(session).update_status(status_tour, tournament_id, user)

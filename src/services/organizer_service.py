@@ -16,6 +16,7 @@ from sqlmodel import select, or_
 from sqlmodel.ext.asyncio.session import AsyncSession
 from fastapi.responses import JSONResponse
 from src.schemas.user_schema.user_credentials import UserCredentials
+from src.schemas.user_schema.user_full import UserFull
 from src.services.auth_service import AuthService
 
 user_router = APIRouter()
@@ -24,38 +25,8 @@ class OrganizerService:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def create_tournament(self, tournament: TournamentCreate, user: User):
-        try:
-            sttmt = select(Organizer).where(Organizer.user_id == user.id)
-            result = await self.session.exec(sttmt)
-            organizer: Organizer | None = result.first()
+    
 
-            new_tournament: Tournament = Tournament(**tournament.model_dump(), data = "", organizer_id= organizer.id)
-
-            self.session.add(new_tournament)
-
-            await self.session.commit()
-
-            return JSONResponse(
-                content={"detail":"Torneo creado con éxito!"},
-                status_code=status.HTTP_201_CREATED
-            )
-
-        except Exception as e:
-            raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "Error al intentar crear torneo")
-
-    # async def update_data_tournamen(self, tournament_id: str, data: str, user_id: str):
-    #     try:
-    #         sttmt_org = select(Organizer).where(Organizer.user_id == user_id)
-    #         organizer: Organizer | None = (await self.session.exec(sttmt_org)).first()
-
-    #         if organizer is None:
-                
-
-    #         sttmt = select(Tournament).where(Tournament.id == tournament_id, Tournament.organizer_id == organizer.id)
-    #         tournament: Tournament | None = (await self.session.exec(sttmt)).first()
-        
-    #     except Exception as e:
-    #         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "Error al intentar actualizar torneo")
+  
 
     
