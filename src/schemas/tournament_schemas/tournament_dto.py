@@ -16,7 +16,6 @@ class TournamentDTO(BaseModel):
     start: datetime
     end: datetime
     is_open: bool
-    participants: List | None
 
     class Config:
         from_attributes = True

@@ -7,6 +7,7 @@ from src.models.user_model import RoleUser, User
 from src.schemas.organizer_schemas.organizer_create import OrganizerCreate
 from src.schemas.participant_schemas.participant_create import ParticipantCreate
 from src.schemas.user_schema.user_credentials import UserCredentials
+from src.schemas.user_schema.user_full import UserFull
 from src.services.auth_service import AuthService, oauth_scheme
 from src.services.user_service import UserService
 
@@ -56,7 +57,7 @@ async def refresh_token(
 @user_router.get('/me') 
 @authorization(roles=[RoleUser.PARTICIPANT, RoleUser.ORGANIZER])
 async def user( 
-    user: User = Depends(auth.get_current_user), 
+    user: UserFull = Depends(auth.get_current_user), 
 ): 
     user_data = user
     return user_data

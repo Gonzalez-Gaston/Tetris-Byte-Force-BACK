@@ -75,9 +75,7 @@ class UserService:
                             )
 
                 new_user: User = User(**user.model_dump())
-
                 self.session.add(new_user)
-                await self.session.commit()
 
                 new_participant: Participant = Participant(
                     first_name= user.first_name,
@@ -85,8 +83,8 @@ class UserService:
                     date_of_birth= user.date_of_birth,
                     user_id= new_user.id
                 )
-
                 self.session.add(new_participant)
+
                 await self.session.commit()
 
                 return JSONResponse(
@@ -116,17 +114,15 @@ class UserService:
                             )
 
                 new_user: User = User(**user.model_dump(), role= RoleUser.ORGANIZER)
-
                 self.session.add(new_user)
-                await self.session.commit()
 
                 new_organizer: Organizer = Organizer(
                     name= user.name,
                     description= user.description,
                     user_id= new_user.id
                 )
-
                 self.session.add(new_organizer)
+
                 await self.session.commit()
 
                 return JSONResponse(

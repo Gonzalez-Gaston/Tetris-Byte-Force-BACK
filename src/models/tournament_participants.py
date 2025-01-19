@@ -8,9 +8,8 @@ class TournamentParticipants(SQLModel, table=True):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True)
     participant_id: str = Field(foreign_key='participants.id', index=True)
     tournament_id: str = Field(foreign_key='tournaments.id')
-    final_position: int = Field()
-    points: int = Field()
-    end: datetime | None = Field()
+    final_position: int | None = Field()
+    points: int | None = Field()
     participant: Optional["Participant"] = Relationship(back_populates="tournaments")
     tournament: Optional["Tournament"] = Relationship(back_populates="participants")
 
