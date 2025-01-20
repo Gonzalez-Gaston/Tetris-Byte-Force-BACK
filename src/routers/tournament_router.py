@@ -1,5 +1,5 @@
 from typing import List
-from fastapi import APIRouter, Depends, Query, Request, status, Form
+from fastapi import APIRouter, Depends, Query, status, Request, status, Form
 from fastapi.responses import JSONResponse
 from sqlmodel.ext.asyncio.session import AsyncSession
 from src.config.decorators import authorization
@@ -15,7 +15,6 @@ from src.schemas.user_schema.user_credentials import UserCredentials
 from src.schemas.user_schema.user_full import UserFull
 from src.services.auth_service import AuthService, oauth_scheme
 from src.services.tournament_service import TournamentService
-from src.services.user_service import UserService
 
 tournament_router = APIRouter(prefix='/tournament', tags=['Tournament'])
 
@@ -23,7 +22,7 @@ auth = AuthService()
 
 ############################### POST ###############################
 
-@tournament_router.post('/create_tournament')
+@tournament_router.post('/create_tournament', status_code= status.HTTP_201_CREATED)
 @authorization(roles=[RoleUser.ORGANIZER])
 async def create_user(
     tournament: TournamentCreate,
@@ -60,7 +59,7 @@ async def get_name_tournaments(
 
 ############################### PUT ###############################
 
-@tournament_router.put('/update_status/{tournament_id}')
+@tournament_router.put('/update_status/{tournament_id}', status_code= status.HTTP_201_CREATED)
 @authorization(roles=[RoleUser.ORGANIZER])
 async def update_status(
     tournament_id: str,
