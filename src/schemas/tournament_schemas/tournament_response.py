@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import List
 from pydantic import BaseModel
 from src.models.tournaments import FormatTournament, TypeTournament, StatusTournament
 from src.schemas.organizer_schemas.organizer_dto import OrganizerDTO
@@ -13,7 +12,6 @@ class TournamentResponse(BaseModel):
     status: StatusTournament
     format: FormatTournament
     number_participants: int
-    data: str
     url_image: str | None
     start: datetime
     end: datetime
