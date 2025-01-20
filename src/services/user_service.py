@@ -1,15 +1,12 @@
 from datetime import date, datetime, timedelta, timezone
-from uuid import UUID
 import bcrypt
-from fastapi import APIRouter, HTTPException, status
-from src import db
+from fastapi import HTTPException, status
 from src.models.organizer_model import Organizer
 from src.models.participant_model import Participant
 from src.models.refresh_token import HistorialRefreshToken
 from src.models.user_model import RoleUser, User
 from src.schemas.organizer_schemas.organizer_create import OrganizerCreate
 from src.schemas.participant_schemas.participant_create import ParticipantCreate
-from src.schemas.user_schema.user_create import UserCreate
 from sqlmodel import select, or_
 from sqlmodel.ext.asyncio.session import AsyncSession
 from fastapi.responses import JSONResponse
@@ -79,6 +76,7 @@ class UserService:
                 await self.session.flush()
 
                 new_participant: Participant = Participant(
+                    username= user.username,
                     first_name= user.first_name,
                     last_name= user.last_name,
                     date_of_birth= user.date_of_birth,
@@ -119,7 +117,7 @@ class UserService:
                 await self.session.flush()
 
                 new_organizer: Organizer = Organizer(
-                    name= user.name,
+                    username= user.username,
                     description= user.description,
                     user_id= new_user.id
                 )

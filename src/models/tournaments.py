@@ -16,6 +16,10 @@ class StatusTournament(str, Enum):
     FINALIZADO = "finalizado"
     CANCELADO = "cancelado"
 
+class FormatTournament(int, Enum):
+    THREE = 3
+    FIVE = 5
+
 class Tournament(SQLModel, table=True):
     __tablename__ = 'tournaments'
     id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True, index=True)
@@ -23,7 +27,8 @@ class Tournament(SQLModel, table=True):
     description: str = Field(max_length=500)
     type: str = Field(sa_column=Column(SQLAlchemyEnum(TypeTournament)), default=TypeTournament.SIMPLE)
     status: str = Field(sa_column=Column(SQLAlchemyEnum(StatusTournament)), default=StatusTournament.PROXIMO)
-    number_participants: int = Field()
+    format: int = Field(sa_column=Column(SQLAlchemyEnum(FormatTournament)), default=FormatTournament.THREE)
+    number_participants: int | None = Field()
     url_image: str | None = Field(default=None)
     start: datetime = Field()
     end: datetime = Field()
@@ -32,4 +37,5 @@ class Tournament(SQLModel, table=True):
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     data: str | None = Field()
     organizer_id: str = Field(foreign_key='organizers.id')
+    organizer: "Organizer" = Relationship(back_populates="tournaments")
     participants: List["TournamentParticipants"] = Relationship(back_populates="tournament")
