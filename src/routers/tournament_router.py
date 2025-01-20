@@ -9,6 +9,7 @@ from src.models.user_model import RoleUser, User
 from src.schemas.organizer_schemas.organizer_create import OrganizerCreate
 from src.schemas.participant_schemas.participant_create import ParticipantCreate
 from src.schemas.tournament_schemas.tournament_create import TournamentCreate
+from src.schemas.tournament_schemas.tournament_dto import ListTournamentDTO, TournamentDTO
 from src.schemas.tournament_schemas.tournament_response import TournamentResponse
 from src.schemas.user_schema.user_credentials import UserCredentials
 from src.schemas.user_schema.user_full import UserFull
@@ -34,29 +35,25 @@ async def create_user(
 
 ############################### GET ###############################
 
-@tournament_router.get('/get_all_tournaments')
-@authorization(roles=[RoleUser.ORGANIZER, RoleUser.PARTICIPANT])
+@tournament_router.get('/get_all_tournaments', response_model= ListTournamentDTO)
 async def get_all_tournaments(
-    user: UserFull = Depends(auth.get_current_user),
     session: AsyncSession = Depends(db.get_session),
     status_filter: StatusTournament | None = Query(None)
 ):
     return await TournamentService(session).get_all_tournaments(status_filter)
 
-@tournament_router.get('/get_name_tournaments')
-@authorization(roles=[RoleUser.ORGANIZER, RoleUser.PARTICIPANT])
+@tournament_router.get('/get_name_tournaments', response_model= ListTournamentDTO)
 async def get_name_tournaments(
-    user: UserFull = Depends(auth.get_current_user),
     session: AsyncSession = Depends(db.get_session),
     name_filter: str = Query(None, min_length=3, description="El nombre debe tener al menos 3 caracteres")
 ):
     return await TournamentService(session).get_name_tournaments(name_filter)
 
-@tournament_router.get('/get_tournament/{id}')
-@authorization(roles=[RoleUser.ORGANIZER, RoleUser.PARTICIPANT])
+@tournament_router.get('/get_tournament/{id}', response_model= TournamentResponse)
+# @authorization(roles=[RoleUser.ORGANIZER, RoleUser.PARTICIPANT])
 async def get_name_tournaments(
     id: str,
-    user: UserFull = Depends(auth.get_current_user),
+    # user: UserFull = Depends(auth.get_current_user),
     session: AsyncSession = Depends(db.get_session),
 ):
     return await TournamentService(session).get_tournament(id)

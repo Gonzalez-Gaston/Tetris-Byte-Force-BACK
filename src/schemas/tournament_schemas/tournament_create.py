@@ -1,12 +1,13 @@
 from datetime import datetime, timezone
-from pydantic import BaseModel, field_validator, model_validator, root_validator
-from src.models.tournaments import TypeTournament, StatusTournament
+from pydantic import BaseModel, field_validator, model_validator
+from src.models.tournaments import FormatTournament, TypeTournament
 
 
 class TournamentCreate(BaseModel):
     name: str
     description: str
     type: TypeTournament
+    format: FormatTournament
     number_participants: int
     url_image: str | None
     start: datetime

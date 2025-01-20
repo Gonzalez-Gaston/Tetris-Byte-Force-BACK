@@ -15,7 +15,6 @@ class User(SQLModel, table=True):
     email: str = Field(max_length=50, unique=True, index=True)
     password_hash: str = Field(max_length=100)
     role: str = Field(sa_column=Column(SQLAlchemyEnum(RoleUser)), default=RoleUser.PARTICIPANT)
-    url_image: str | None = Field(default=None)
     is_active: bool = Field(default=False)
     token: str | None = Field(default_factory=lambda: str(uuid.uuid4()))
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))

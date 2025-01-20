@@ -8,7 +8,6 @@ class OrganizerCreate(BaseModel):
     username: str
     email: str
     password_hash: str
-    name: str
     description: str
 
     @classmethod
