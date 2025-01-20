@@ -1,11 +1,13 @@
 from typing import List
 from fastapi import HTTPException, status
+from src.models.participant_model import Participant
 from src.models.tournament_participants import TournamentParticipants
 from src.models.tournaments import StatusTournament, Tournament
 from src.models.user_model import User
 from src.schemas.organizer_schemas.organizer_dto import OrganizerDTO
 from src.schemas.participant_schemas.participant_dto import ParticipantDTO
 from src.schemas.tournament_schemas.tournament_create import TournamentCreate
+from src.schemas.tournament_schemas.tournament_dto import TournamentDTO
 from src.schemas.tournament_schemas.tournament_response import TournamentResponse
 from sqlmodel import select, or_
 from sqlmodel.ext.asyncio.session import AsyncSession
@@ -21,11 +23,14 @@ class TournamentService:
 
     async def create_tournament(self, tournament: TournamentCreate, user: UserFull):
         try:
+
             # matchs: List = await self.generate_tournament_matches_simple(tournament.number_participants)
             new_tournament: Tournament = Tournament(**tournament.model_dump(), data = "", organizer_id= user.full.id)
-
+            
             self.session.add(new_tournament)
+
             await self.session.commit()
+
             return JSONResponse(
                 content={
                     "tournament_id": new_tournament.id
@@ -98,7 +103,6 @@ class TournamentService:
             )
 
         except Exception as e:
-            print(f"Error al obtener torneos: {e}")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Error al intentar obtener torneos"
@@ -120,6 +124,8 @@ class TournamentService:
                     status_code= status.HTTP_404_NOT_FOUND
                 )
             
+
+
             list_participants: List[ParticipantDTO] = []
 
             for participant in tournament.participants:
@@ -137,7 +143,7 @@ class TournamentService:
 
             return JSONResponse(
                 content={
-                    "tournament": TournamentResponse.model_validate(tournament).model_dump(mode="json") 
+                    "tournament": tour_resp.model_dump(mode='json')
                 },
                 status_code= status.HTTP_200_OK
             )
@@ -267,4 +273,3 @@ class TournamentService:
                 matches[i]["nextMatchId"] = matches[next_match_index + i]["id"]
 
         return matches
-            
