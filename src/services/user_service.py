@@ -143,6 +143,13 @@ class UserService:
             participant.date_of_birth = user_update.date_of_birth
 
             await self.session.commit()
+
+            return JSONResponse(
+                status_code=status.HTTP_204_NO_CONTENT, 
+                content={
+                    "detail": "Usuario actualizado correctamente."
+                }
+            )
         except Exception as e:
             raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, 'Error al actualizar usuario.')
     
