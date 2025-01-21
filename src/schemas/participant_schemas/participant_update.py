@@ -1,10 +1,8 @@
 from datetime import date
-import re
-import bcrypt
 from pydantic import BaseModel, field_validator
 
 
-class UserUpdate(BaseModel):
+class ParticipantUpdate(BaseModel):
     first_name: str
     last_name: str
     date_of_birth: date

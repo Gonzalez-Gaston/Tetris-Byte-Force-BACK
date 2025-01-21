@@ -1,14 +1,13 @@
-from fastapi import APIRouter, HTTPException, status
-from src.models.organizer_model import Organizer
+from asyncio import to_thread
+from typing import List
+from fastapi import APIRouter, HTTPException, UploadFile, status
+from src.models.cloudinary_model import CloudinaryModel
 from src.models.participant_model import Participant
 from src.models.tournament_participants import TournamentParticipants
-from src.models.tournaments import Tournament
-from src.models.user_model import User
-from src.schemas.tournament_schemas.tournament_create import TournamentCreate
+from src.schemas.participant_schemas.participant_update import ParticipantUpdate
 from sqlmodel import select, or_
 from sqlmodel.ext.asyncio.session import AsyncSession
 from fastapi.responses import JSONResponse
-
 from src.schemas.user_schema.user_full import UserFull
 
 user_router = APIRouter()
@@ -77,3 +76,98 @@ class ParticipantService:
 
         except Exception as e:
             raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "Error al intentar crear torneo")
+        
+    async def registered_tournaments_ids(self, user: UserFull):
+        try:
+            sttmt = select(TournamentParticipants.tournament_id).where(
+                TournamentParticipants.participant_id == user.full.id
+            )
+            registers: List[str] = (await self.session.exec(sttmt)).all()
+
+            if not registers:
+                return JSONResponse(
+                    content={
+                        "detail": "No se encontraron registros", 
+                    },
+                    status_code= status.HTTP_404_NOT_FOUND
+                )
+
+            # tournaments = []
+            # for register in registers:
+            #     sttmt = select(Tournament).where(
+            #         Tournament.id == register.tournament_id
+            #     )
+            #     tournament: Tournament | None = (await self.session.exec(sttmt)).first()
+            #     if tournament is not None:
+            #         tournaments.append(tournament)
+
+            return JSONResponse(
+                    content= registers,
+                    status_code= status.HTTP_200_OK
+                )
+
+        except Exception as e:
+            raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "Error al intentar obtener los torneos")
+        
+    async def registered_tournaments_ids(self, user: UserFull):
+        try:
+            sttmt = select(TournamentParticipants.tournament_id).where(
+                TournamentParticipants.participant_id == user.full.id
+            )
+            registers: List[str] = (await self.session.exec(sttmt)).all()
+
+            if not registers:
+                return JSONResponse(
+                    content={
+                        "detail": "No se encontraron registros", 
+                    },
+                    status_code= status.HTTP_404_NOT_FOUND
+                )
+
+            # tournaments = []
+            # for register in registers:
+            #     sttmt = select(Tournament).where(
+            #         Tournament.id == register.tournament_id
+            #     )
+            #     tournament: Tournament | None = (await self.session.exec(sttmt)).first()
+            #     if tournament is not None:
+            #         tournaments.append(tournament)
+
+            return JSONResponse(
+                    content= registers,
+                    status_code= status.HTTP_200_OK
+                )
+
+        except Exception as e:
+            raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "Error al intentar obtener los torneos")
+        
+
+    async def participant_update(self, user: UserFull, image: UploadFile, participant_update: ParticipantUpdate):
+        try:
+            participant: Participant = await self.session.get(Participant, user.full.id)
+
+            result = {}
+            if image:
+                result = await to_thread(
+                    CloudinaryModel().upload_image, 
+                    image,
+                    "participant",
+                    user.full.id
+                )
+
+            participant.first_name = participant_update.first_name
+            participant.last_name = participant_update.last_name
+            participant.date_of_birth = participant_update.date_of_birth
+            if image:
+                participant.url_image = result.get('secure_url', participant.url_image)
+
+            await self.session.commit()
+
+            return JSONResponse(
+                status_code=status.HTTP_200_OK, 
+                content={
+                    "detail": "Usuario actualizado correctamente."
+                }
+            )
+        except Exception as e:
+            raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, 'Error al actualizar usuario.')
