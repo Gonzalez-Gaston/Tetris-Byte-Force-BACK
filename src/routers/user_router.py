@@ -1,14 +1,16 @@
-from fastapi import APIRouter, Depends, File, Request, UploadFile, status, Form
+from datetime import date
+from fastapi import APIRouter, Depends, status, Form
 from fastapi.responses import JSONResponse
 from sqlmodel.ext.asyncio.session import AsyncSession
 from src.config.decorators import authorization
 from src.database.db import db
 from src.models.user_model import RoleUser, User
 from src.schemas.organizer_schemas.organizer_create import OrganizerCreate
+from src.schemas.organizer_schemas.organizer_update import OrganizerUpdate
 from src.schemas.participant_schemas.participant_create import ParticipantCreate
+from src.schemas.participant_schemas.participant_update import ParticipantUpdate
 from src.schemas.user_schema.user_credentials import UserCredentials
 from src.schemas.user_schema.user_full import UserFull
-from src.schemas.user_schema.user_update import UserUpdate
 from src.services.auth_service import AuthService, oauth_scheme
 from src.services.user_service import UserService
 
@@ -81,12 +83,6 @@ async def validate_email(
 ############################### PUT ###############################
 
 
-@user_router.put('/user_update')
-@authorization(roles=[RoleUser.PARTICIPANT])
-async def user_update(
-    user_update: UserUpdate,
-    image: UploadFile = File(None),
-    user: UserFull = Depends(auth.get_current_user),
-    session: AsyncSession = Depends(db.get_session),
-):
-    return await UserService(session).user_update(user, image, user_update)
+
+
+

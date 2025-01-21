@@ -18,8 +18,8 @@ class OrganizerCreate(BaseModel):
     
     @field_validator('username')
     def username_validator(cls, username):
-        if len(username) < 3 or len(username) > 10:
-            raise ValueError('El username debe contener entre 3 y 10 caracteres')
+        if len(username) < 3 or len(username) > 20:
+            raise ValueError('El username debe contener entre 3 y 20 caracteres')
         if ' ' in username:
             raise ValueError('El username no puede contener espacios')
         return username
@@ -42,3 +42,9 @@ class OrganizerCreate(BaseModel):
         if not re.match(email_regex, email):
             raise ValueError('El correo electrónico no es válido')
         return email
+    
+    @field_validator('description')
+    def description_validator(cls, description):
+        if len(description) < 20 or len(description) > 200:
+            raise ValueError('La description debe contener entre 20 y 200 caracteres')
+        return description

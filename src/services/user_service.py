@@ -1,4 +1,6 @@
+from asyncio import to_thread
 from datetime import date, datetime, timedelta, timezone
+import uuid
 import bcrypt
 from fastapi import HTTPException, UploadFile, status
 from src.models.organizer_model import Organizer
@@ -6,14 +8,16 @@ from src.models.participant_model import Participant
 from src.models.refresh_token import HistorialRefreshToken
 from src.models.user_model import RoleUser, User
 from src.schemas.organizer_schemas.organizer_create import OrganizerCreate
+from src.schemas.organizer_schemas.organizer_update import OrganizerUpdate
 from src.schemas.participant_schemas.participant_create import ParticipantCreate
 from sqlmodel import select, or_
 from sqlmodel.ext.asyncio.session import AsyncSession
 from fastapi.responses import JSONResponse
+from src.schemas.participant_schemas.participant_update import ParticipantUpdate
 from src.schemas.user_schema.user_credentials import UserCredentials
 from src.schemas.user_schema.user_full import UserFull
-from src.schemas.user_schema.user_update import UserUpdate
 from src.services.auth_service import AuthService
+from src.models.cloudinary_model import CloudinaryModel
 
 class UserService:
     def __init__(self, session: AsyncSession):
@@ -134,24 +138,9 @@ class UserService:
             except Exception as e:
                 raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, 'Error al crear usuario.')
             
-    async def user_update(self, user: UserFull, image: UploadFile, user_update: UserUpdate):
-        try:
-            participant: Participant = await self.session.get(Participant, user.full.id)
-
-            participant.first_name = user_update.first_name
-            participant.last_name = user_update.last_name
-            participant.date_of_birth = user_update.date_of_birth
-
-            await self.session.commit()
-
-            return JSONResponse(
-                status_code=status.HTTP_204_NO_CONTENT, 
-                content={
-                    "detail": "Usuario actualizado correctamente."
-                }
-            )
-        except Exception as e:
-            raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, 'Error al actualizar usuario.')
+ 
+        
+    
     
     @classmethod
     def verify_password(cls, password: str, hashed_password: str) -> bool:
