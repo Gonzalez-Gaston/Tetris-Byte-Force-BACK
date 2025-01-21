@@ -1,6 +1,6 @@
 from datetime import date, datetime, timedelta, timezone
 import bcrypt
-from fastapi import HTTPException, status
+from fastapi import HTTPException, UploadFile, status
 from src.models.organizer_model import Organizer
 from src.models.participant_model import Participant
 from src.models.refresh_token import HistorialRefreshToken
@@ -11,6 +11,8 @@ from sqlmodel import select, or_
 from sqlmodel.ext.asyncio.session import AsyncSession
 from fastapi.responses import JSONResponse
 from src.schemas.user_schema.user_credentials import UserCredentials
+from src.schemas.user_schema.user_full import UserFull
+from src.schemas.user_schema.user_update import UserUpdate
 from src.services.auth_service import AuthService
 
 class UserService:
@@ -131,6 +133,25 @@ class UserService:
                             )
             except Exception as e:
                 raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, 'Error al crear usuario.')
+            
+    async def user_update(self, user: UserFull, image: UploadFile, user_update: UserUpdate):
+        try:
+            participant: Participant = await self.session.get(Participant, user.full.id)
+
+            participant.first_name = user_update.first_name
+            participant.last_name = user_update.last_name
+            participant.date_of_birth = user_update.date_of_birth
+
+            await self.session.commit()
+
+            return JSONResponse(
+                status_code=status.HTTP_204_NO_CONTENT, 
+                content={
+                    "detail": "Usuario actualizado correctamente."
+                }
+            )
+        except Exception as e:
+            raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, 'Error al actualizar usuario.')
     
     @classmethod
     def verify_password(cls, password: str, hashed_password: str) -> bool:
