@@ -9,7 +9,6 @@ class TournamentCreate(BaseModel):
     type: TypeTournament
     format: FormatTournament
     number_participants: int
-    url_image: str | None
     start: datetime
     end: datetime
 
