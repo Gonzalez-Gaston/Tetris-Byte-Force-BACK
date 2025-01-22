@@ -138,10 +138,6 @@ class UserService:
             except Exception as e:
                 raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, 'Error al crear usuario.')
             
- 
-        
-    
-    
     @classmethod
     def verify_password(cls, password: str, hashed_password: str) -> bool:
         return bcrypt.checkpw(password.encode('utf-8'), hashed_password.encode('utf-8'))
