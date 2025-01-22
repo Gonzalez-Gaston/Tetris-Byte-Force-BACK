@@ -73,6 +73,9 @@ class OrganizerService:
             if tournament is None:
                 raise HTTPException(status.HTTP_404_NOT_FOUND, 'Torneo no encontrado.')
             
+            if tournament.organizer_id != user.full.id:
+                raise HTTPException(status.HTTP_403_FORBIDDEN, 'No tienes permisos para banear a este usuario.')
+            
             self.session.add(UserBanned(**data_ban.model_dump()))
 
             await self.session.commit()

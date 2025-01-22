@@ -22,7 +22,7 @@ class ParticipantService:
 
     async def register_tournament(self, tournament_id: str, user: UserFull):
         try:
-            banned_sttmt = select(UserBanned).where(UserBanned.user_id == user.full.id, UserBanned.tournament_id == tournament_id)
+            banned_sttmt = select(UserBanned).where(UserBanned.participant_id == user.full.id, UserBanned.tournament_id == tournament_id)
             banned: UserBanned | None = (await self.session.exec(banned_sttmt)).first()
 
             if banned is not None:
