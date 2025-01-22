@@ -273,4 +273,4 @@ class TournamentService:
                 matches[i]["nextMatchId"] = matches[next_match_index + i]["id"]
 
         return matches
-    
+

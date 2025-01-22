@@ -13,7 +13,6 @@ class TournamentResponse(BaseModel):
     status: StatusTournament
     format: FormatTournament
     number_participants: int
-    data: str
     url_image: str | None
     start: datetime
     end: datetime
