@@ -12,6 +12,7 @@ from src.schemas.participant_schemas.participant_create import ParticipantCreate
 from src.schemas.tournament_schemas.tournament_create import TournamentCreate
 from src.schemas.tournament_schemas.tournament_dto import ListTournamentDTO, TournamentDTO
 from src.schemas.tournament_schemas.tournament_response import TournamentResponse
+from src.schemas.tournament_schemas.tournament_update import TournamentUpdate
 from src.schemas.user_schema.user_credentials import UserCredentials
 from src.schemas.user_schema.user_full import UserFull
 from src.services.auth_service import AuthService, oauth_scheme
@@ -33,7 +34,7 @@ async def create_tournament(
     number_participants: int= Form(...),
     start: datetime= Form(...),
     end: datetime= Form(...),
-    image: UploadFile = File(None),
+    image: UploadFile | None = File(None),
     user: UserFull = Depends(auth.get_current_user),
     session: AsyncSession = Depends(db.get_session),
 ):
@@ -78,6 +79,25 @@ async def get_name_tournaments(
 
 
 ############################### PUT ###############################
+
+@tournament_router.put('/update_tournament/{tournament_id}', status_code= status.HTTP_204_NO_CONTENT)
+@authorization(roles=[RoleUser.ORGANIZER])
+async def update_tournament(
+    name: str= Form(...),
+    description:str = Form(...),
+    start: datetime= Form(...),
+    end: datetime= Form(...),
+    image: UploadFile | None = File(None),
+    user: UserFull = Depends(auth.get_current_user),
+    session: AsyncSession = Depends(db.get_session),
+):
+    return await TournamentService(session).update_tournament(
+        tournament= TournamentUpdate(
+            name= name,
+            description= description,
+            start= start,
+            end= end
+        ), user= user, image= image)
 
 @tournament_router.put('/update_status/{tournament_id}', status_code= status.HTTP_201_CREATED)
 @authorization(roles=[RoleUser.ORGANIZER])

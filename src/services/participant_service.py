@@ -1,5 +1,5 @@
 from asyncio import to_thread
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List
 from fastapi import APIRouter, HTTPException, UploadFile, status
 from src.models.banned_model import UserBanned
@@ -193,6 +193,14 @@ class ParticipantService:
                     },
                     status_code= status.HTTP_400_BAD_REQUEST
                 )
+            
+            if tournament.start - timedelta(hours=1) > datetime.now():
+                return JSONResponse(
+                    content={
+                        "detail": "Solo se puede copnfirmar la participación una hora antes del inicio del torneo", 
+                    },
+                    status_code= status.HTTP_400_BAD_REQUEST
+                ) 
 
             register.confirm = True
 

@@ -248,6 +248,63 @@ class TournamentService:
         except Exception as e:
             raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "Error al intentar actualizar torneo")
         
+    async def update_tournament(self, tournament: TournamentCreate, user: UserFull, image: UploadFile | None):
+        try:
+            sttmt = select(Tournament).where(Tournament.id == tournament.id, Tournament.organizer_id == user.full.id)
+            tournament: Tournament | None = (await self.session.exec(sttmt)).first()
+
+            if tournament is None:
+                return JSONResponse(
+                    content={
+                        "detail": "Torneo no entontrado", 
+                    },
+                    status_code= status.HTTP_404_NOT_FOUND
+                )
+            
+            if tournament.organizer_id != user.full.id:
+                return JSONResponse(
+                    content={
+                        "detail": "Solo el creador puedo actualizar el torneo", 
+                    },
+                    status_code= status.HTTP_403_FORBIDDEN
+                )
+            
+            if tournament.status != StatusTournament.PROXIMO:
+                return JSONResponse(
+                    content={
+                        "detail": "No es posible actualizar el torneo", 
+                    },
+                    status_code= status.HTTP_400_BAD_REQUEST
+                )
+            
+            tournament.name = tournament.name
+            tournament.description = tournament.description
+            tournament.start = tournament.start
+            tournament.end = tournament.end
+
+            result = {}
+            if image is not None:
+                result = await to_thread(
+                    CloudinaryModel().upload_image, 
+                    image,
+                    "tournament",
+                    tournament.id
+                )
+
+            if image is not None:
+                tournament.url_image = result.get('secure_url', None)
+
+            await self.session.commit()
+
+            return JSONResponse(
+                content={
+                    "detail": "Torneo actualizado correctamente",
+                },
+                status_code= status.HTTP_204_NO_CONTENT
+            )
+        except Exception as e:
+            raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "Error al intentar actualizar torneo")
+        
     async def generate_tournament_matches_simple(self, participants):
         matches = []
         round_number = 1

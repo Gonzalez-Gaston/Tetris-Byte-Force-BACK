@@ -36,7 +36,7 @@ async def ban_participant(
 @authorization(roles=[RoleUser.ORGANIZER])
 async def organizer_update(
     description: str = Form(...),
-    image: UploadFile = File(None),
+    image: UploadFile | None = File(None),
     user: UserFull = Depends(auth.get_current_user),
     session: AsyncSession = Depends(db.get_session),
 ):

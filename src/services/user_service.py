@@ -2,7 +2,7 @@ from asyncio import to_thread
 from datetime import date, datetime, timedelta, timezone
 import uuid
 import bcrypt
-from fastapi import HTTPException, UploadFile, status
+from fastapi import HTTPException, status
 from src.models.organizer_model import Organizer
 from src.models.participant_model import Participant
 from src.models.refresh_token import HistorialRefreshToken
