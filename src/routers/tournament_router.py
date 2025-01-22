@@ -57,6 +57,9 @@ async def get_name_tournaments(
 ):
     return await TournamentService(session).get_tournament(id)
 
+
+
+
 ############################### PUT ###############################
 
 @tournament_router.put('/update_status/{tournament_id}', status_code= status.HTTP_201_CREATED)
