@@ -2,9 +2,12 @@ from asyncio import to_thread
 from typing import List
 from fastapi import APIRouter, HTTPException, UploadFile, status
 from sqlmodel import select
+from src.models.banned_model import UserBanned
 from src.models.cloudinary_model import CloudinaryModel
 from src.models.organizer_model import Organizer
+from src.models.participant_model import Participant
 from src.models.tournaments import Tournament
+from src.schemas.organizer_schemas.organizer_ban import OrganizerBan
 from src.schemas.organizer_schemas.organizer_update import OrganizerUpdate
 from sqlmodel.ext.asyncio.session import AsyncSession
 from fastapi.responses import JSONResponse
@@ -60,5 +63,26 @@ class OrganizerService:
         except Exception as e:
             raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "Error al intentar obtener los torneos")
   
+    async def ban_participant(self, user: UserFull, data_ban: OrganizerBan):
+        try:
+            participant: Participant | None = await self.session.get(Participant, data_ban.participant_id)
+            if participant is None:
+                raise HTTPException(status.HTTP_404_NOT_FOUND, 'Participante no encontrado.')
+            
+            tournament: Tournament | None = await self.session.get(Tournament, data_ban.tournament_id)
+            if tournament is None:
+                raise HTTPException(status.HTTP_404_NOT_FOUND, 'Torneo no encontrado.')
+            
+            self.session.add(UserBanned(**data_ban.model_dump()))
 
+            await self.session.commit()
+
+            return JSONResponse(
+                status_code= status.HTTP_204_NO_CONTENT, 
+                content={
+                    "detail": "Usuario baneado correctamente."
+                }
+            )
+        except Exception as e:
+            raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, 'Error al banear usuario.')
     

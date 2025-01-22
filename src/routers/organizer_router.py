@@ -4,6 +4,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from src.config.decorators import authorization
 from src.database.db import db
 from src.models.user_model import RoleUser
+from src.schemas.organizer_schemas.organizer_ban import OrganizerBan
 from src.schemas.organizer_schemas.organizer_update import OrganizerUpdate
 from src.schemas.tournament_schemas.tournament_name import TournamentName
 from src.schemas.user_schema.user_full import UserFull
@@ -21,6 +22,15 @@ async def get_tournaments_created(
     session: AsyncSession = Depends(db.get_session),
 ):
     return await OrganizerService(session).get_tournaments_created(user)
+
+@organizer_router.post('/ban_participant', status_code= status.HTTP_204_NO_CONTENT)
+@authorization(roles=[RoleUser.ORGANIZER])
+async def ban_participant(
+    data_ban: OrganizerBan,
+    user: UserFull = Depends(auth.get_current_user),
+    session: AsyncSession = Depends(db.get_session),
+):
+    return await OrganizerService(session).ban_participant(user, data_ban)
 
 @organizer_router.put('/organizer_update')
 @authorization(roles=[RoleUser.ORGANIZER])

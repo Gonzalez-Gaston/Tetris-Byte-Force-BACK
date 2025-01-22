@@ -67,6 +67,7 @@ class DataBase:
             from src.models.participant_model import Participant
             from src.models.tournaments import Tournament
             from src.models.tournament_participants import TournamentParticipants
+            from src.models.banned_model import UserBanned
 
             async with self.engine.begin() as conn:
                 await conn.run_sync(SQLModel.metadata.create_all)
