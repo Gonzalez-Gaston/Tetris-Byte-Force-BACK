@@ -1,5 +1,7 @@
 from asyncio import to_thread
+from datetime import datetime
 from typing import List
+import uuid
 from fastapi import HTTPException, UploadFile, status
 from src.models.cloudinary_model import CloudinaryModel
 from src.models.participant_model import Participant
@@ -305,44 +307,57 @@ class TournamentService:
         except Exception as e:
             raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "Error al intentar actualizar torneo")
         
-    async def generate_tournament_matches_simple(self, participants):
-        matches = []
+    def generate_matchups(num_participants):
+        if num_participants not in [8, 16, 32, 64]:
+            raise ValueError("La cantidad de participantes debe ser 8, 16, 32 o 64.")
+
+        rounds = {
+            2: 'Final',
+            4: 'Semifinal',
+            8: '4tos de Final',
+            16: '8vos de Final',
+            32: '16vos de Final',
+            64: '32vos de Final'
+        }
+
+        matchups = []
         round_number = 1
         match_id = 1
-        current_participants = participants[:]
 
-        while len(current_participants) > 1:
-            next_round_participants = []
-            total_matches = len(current_participants) // 2
+        while num_participants != 1:
 
-            for i in range(total_matches):
-                match_participants = [
-                    {"id": current_participants[i * 2]["id"], "name": current_participants[i * 2]["name"]},
-                    {"id": current_participants[i * 2 + 1]["id"], "name": current_participants[i * 2 + 1]["name"]},
-                ]
-
+            for i in range(0, num_participants, 2):
                 match = {
-                    "id": f"m{match_id}",
-                    "name": f"Round {round_number} - Match {i + 1}",
-                    "nextMatchId": None,  # Esto se actualizará después
+                    "id": str(uuid.uuid4()),
+                    "name": rounds[num_participants],
+                    "nextMatchId": None,
                     "tournamentRoundText": str(round_number),
-                    "state": "PENDING",
-                    "participants": match_participants,
+                    "startTime": datetime.now(),
+                    "state": None, 
+                    "participants": [
+                        {
+                            "id": None,
+                            "resultText": None,
+                            "isWinner": False,
+                            "status": None,
+                            "name": None
+                        },
+                        {
+                            "id": None,
+                            "resultText": None,
+                            "isWinner": False,
+                            "status": None,
+                            "name": None
+                        }
+                    ]
                 }
 
-                matches.append(match)
-                next_round_participants.append({"id": f"winner-m{match_id}", "name": f"Winner of m{match_id}"})
-                match_id += 1
+                matchups.append(match)
 
-            current_participants = next_round_participants
-            round_number += 1
+            num_participants = num_participants // 2
+        return matchups
 
-        # Actualizar los "nextMatchId" en los enfrentamientos
-        next_match_index = len(matches)
-        while next_match_index > 1:
-            next_match_index //= 2
-            for i in range(next_match_index):
-                matches[i]["nextMatchId"] = matches[next_match_index + i]["id"]
-
-        return matches
-    
+    # Ejemplo de uso:
+    matchups = generate_matchups(64)
+    for matchup in matchups:
+        print(matchup)
