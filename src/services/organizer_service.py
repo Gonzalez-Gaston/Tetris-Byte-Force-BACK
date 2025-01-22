@@ -1,10 +1,14 @@
 from asyncio import to_thread
+from typing import List
 from fastapi import APIRouter, HTTPException, UploadFile, status
+from sqlmodel import select
 from src.models.cloudinary_model import CloudinaryModel
 from src.models.organizer_model import Organizer
+from src.models.tournaments import Tournament
 from src.schemas.organizer_schemas.organizer_update import OrganizerUpdate
 from sqlmodel.ext.asyncio.session import AsyncSession
 from fastapi.responses import JSONResponse
+from src.schemas.tournament_schemas.tournament_name import TournamentName
 from src.schemas.user_schema.user_full import UserFull
 
 user_router = APIRouter()
@@ -41,6 +45,20 @@ class OrganizerService:
         except Exception as e:
             raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, 'Error al actualizar usuario.')
 
+    async def get_tournaments_created(self, user: UserFull):
+        try:
+            sttmt = (select(Tournament.id, Tournament.name).where(Tournament.organizer_id == user.full.id))
+            tournaments: List[Tournament] = (await self.session.exec(sttmt)).all()
+
+            list_tournaments: List[TournamentName] = [TournamentName.model_validate(tour).model_dump() for tour in tournaments]
+
+            return JSONResponse(
+                    content={"tournaments": list_tournaments},
+                    status_code= status.HTTP_200_OK
+                )
+
+        except Exception as e:
+            raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "Error al intentar obtener los torneos")
   
 
     

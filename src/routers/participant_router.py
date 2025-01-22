@@ -59,3 +59,14 @@ async def participant_update(
     session: AsyncSession = Depends(db.get_session),
 ):
     return await ParticipantService(session).participant_update(user, image, ParticipantUpdate(first_name=first_name, last_name=last_name, date_of_birth=date_of_birth))
+
+############################### PUT ###############################
+
+@participant_router.put('/confirm_participation/{tournament_participant_id}', status_code= status.HTTP_204_NO_CONTENT)
+@authorization(roles=[RoleUser.PARTICIPANT])
+async def confirm_participation(
+    tournament_participant_id: str,
+    user: UserFull = Depends(auth.get_current_user),
+    session: AsyncSession = Depends(db.get_session),
+):
+    return await ParticipantService(session).confirm_participation(tournament_participant_id, user)
