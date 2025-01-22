@@ -2,6 +2,7 @@ from asyncio import to_thread
 from datetime import datetime
 from typing import List
 from fastapi import APIRouter, HTTPException, UploadFile, status
+from src.models.banned_model import UserBanned
 from src.models.cloudinary_model import CloudinaryModel
 from src.models.participant_model import Participant
 from src.models.tournament_participants import TournamentParticipants
@@ -21,6 +22,17 @@ class ParticipantService:
 
     async def register_tournament(self, tournament_id: str, user: UserFull):
         try:
+            banned_sttmt = select(UserBanned).where(UserBanned.user_id == user.full.id, UserBanned.tournament_id == tournament_id)
+            banned: UserBanned | None = (await self.session.exec(banned_sttmt)).first()
+
+            if banned is not None:
+                return JSONResponse(
+                    content={
+                        "detail": "Usuario baneado en el torneo", 
+                    },
+                    status_code= status.HTTP_400_BAD_REQUEST
+                )
+
             sttmt = select(TournamentParticipants).where(
                 TournamentParticipants.tournament_id == tournament_id,
                 TournamentParticipants.participant_id == user.full.id
