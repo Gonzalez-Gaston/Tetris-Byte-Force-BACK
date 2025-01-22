@@ -1,10 +1,11 @@
+from datetime import datetime
 from typing import List
-from fastapi import APIRouter, Depends, Query, status, Request, status, Form
+from fastapi import APIRouter, Depends, File, Query, UploadFile, status, Request, status, Form
 from fastapi.responses import JSONResponse
 from sqlmodel.ext.asyncio.session import AsyncSession
 from src.config.decorators import authorization
 from src.database.db import db
-from src.models.tournaments import Tournament, StatusTournament
+from src.models.tournaments import FormatTournament, Tournament, StatusTournament, TypeTournament
 from src.models.user_model import RoleUser, User
 from src.schemas.organizer_schemas.organizer_create import OrganizerCreate
 from src.schemas.participant_schemas.participant_create import ParticipantCreate
@@ -24,12 +25,28 @@ auth = AuthService()
 
 @tournament_router.post('/create_tournament', status_code= status.HTTP_201_CREATED)
 @authorization(roles=[RoleUser.ORGANIZER])
-async def create_user(
-    tournament: TournamentCreate,
+async def create_tournament(
+    name: str= Form(...),
+    description:str = Form(...),
+    type: TypeTournament= Form(...),
+    format: FormatTournament= Form(...),
+    number_participants: int= Form(...),
+    start: datetime= Form(...),
+    end: datetime= Form(...),
+    image: UploadFile = File(None),
     user: UserFull = Depends(auth.get_current_user),
     session: AsyncSession = Depends(db.get_session),
 ):
-    return await TournamentService(session).create_tournament(tournament, user)
+    return await TournamentService(session).create_tournament(
+        TournamentCreate(
+            name= name,
+            description= description,
+            type= type,
+            format= format,
+            number_participants= number_participants,
+            start= start,
+            end= end
+        ), user, image)
 
 
 ############################### GET ###############################

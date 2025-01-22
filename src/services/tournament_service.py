@@ -1,5 +1,7 @@
+from asyncio import to_thread
 from typing import List
-from fastapi import HTTPException, status
+from fastapi import HTTPException, UploadFile, status
+from src.models.cloudinary_model import CloudinaryModel
 from src.models.participant_model import Participant
 from src.models.tournament_participants import TournamentParticipants
 from src.models.tournaments import StatusTournament, Tournament
@@ -21,12 +23,25 @@ class TournamentService:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def create_tournament(self, tournament: TournamentCreate, user: UserFull):
+    async def create_tournament(self, tournament: TournamentCreate, user: UserFull, image: UploadFile | None):
         try:
 
             # matchs: List = await self.generate_tournament_matches_simple(tournament.number_participants)
+
             new_tournament: Tournament = Tournament(**tournament.model_dump(), data = "", organizer_id= user.full.id)
             
+            result = {}
+            if image is not None:
+                result = await to_thread(
+                    CloudinaryModel().upload_image, 
+                    image,
+                    "tournament",
+                    new_tournament.id
+                )
+
+            if image is not None:
+                new_tournament.url_image = result.get('secure_url', None)
+
             self.session.add(new_tournament)
 
             await self.session.commit()
