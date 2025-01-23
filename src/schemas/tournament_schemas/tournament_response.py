@@ -16,6 +16,7 @@ class TournamentResponse(BaseModel):
     url_image: str | None
     start: datetime
     end: datetime
+    data: str
     is_open: bool
     number_registered: int
     organizer: OrganizerDTO
