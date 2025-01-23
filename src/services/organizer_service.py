@@ -6,6 +6,7 @@ from src.models.banned_model import UserBanned
 from src.models.cloudinary_model import CloudinaryModel
 from src.models.organizer_model import Organizer
 from src.models.participant_model import Participant
+from src.models.tournament_participants import TournamentParticipants
 from src.models.tournaments import Tournament
 from src.schemas.organizer_schemas.organizer_ban import OrganizerBan
 from src.schemas.organizer_schemas.organizer_update import OrganizerUpdate
@@ -67,16 +68,47 @@ class OrganizerService:
         try:
             participant: Participant | None = await self.session.get(Participant, data_ban.participant_id)
             if participant is None:
-                raise HTTPException(status.HTTP_404_NOT_FOUND, 'Participante no encontrado.')
+                return JSONResponse(
+                    status_code= status.HTTP_404_NOT_FOUND, 
+                    content={
+                        "detail": "Participante no encontrado."
+                    }
+                )    
             
             tournament: Tournament | None = await self.session.get(Tournament, data_ban.tournament_id)
             if tournament is None:
-                raise HTTPException(status.HTTP_404_NOT_FOUND, 'Torneo no encontrado.')
+                return JSONResponse(
+                    status_code= status.HTTP_404_NOT_FOUND, 
+                    content={
+                        "detail": "Torneo no encontrado."
+                    }
+                )  
             
             if tournament.organizer_id != user.full.id:
-                raise HTTPException(status.HTTP_403_FORBIDDEN, 'No tienes permisos para banear a este usuario.')
+                return JSONResponse(
+                    status_code= status.HTTP_403_FORBIDDEN, 
+                    content={
+                        "detail": "No tienes permisos para banear a este usuario."
+                    }
+                )  
             
             self.session.add(UserBanned(**data_ban.model_dump()))
+            await self.session.flush()
+
+            sttmt_register = select(TournamentParticipants).where(
+                TournamentParticipants.participant_id == data_ban.participant_id, TournamentParticipants.tournament_id == data_ban.tournament_id
+            )
+            register: TournamentParticipants | None = (await self.session.exec(sttmt_register)).first()
+
+            if register is None:
+                return JSONResponse(
+                    status_code= status.HTTP_404_NOT_FOUND, 
+                    content={
+                        "detail": "Registro no encontrado."
+                    }
+                )  
+            
+            await self.session.delete(register)
 
             await self.session.commit()
 

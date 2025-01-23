@@ -1,5 +1,6 @@
 from asyncio import to_thread
 from datetime import datetime
+import json
 from typing import List
 import uuid
 from fastapi import HTTPException, UploadFile, status
@@ -18,6 +19,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import selectinload, joinedload
 
+from src.schemas.tournament_schemas.tournament_update import TournamentUpdate
 from src.schemas.user_schema.user_full import UserFull
 
 
@@ -28,9 +30,9 @@ class TournamentService:
     async def create_tournament(self, tournament: TournamentCreate, user: UserFull, image: UploadFile | None):
         try:
 
-            # matchs: List = await self.generate_tournament_matches_simple(tournament.number_participants)
+            data = await self.generate_matchups_simple(tournament.number_participants)
 
-            new_tournament: Tournament = Tournament(**tournament.model_dump(), data = "", organizer_id= user.full.id)
+            new_tournament: Tournament = Tournament(**tournament.model_dump(), data = data, organizer_id= user.full.id)
             
             result = {}
             if image is not None:
@@ -200,9 +202,8 @@ class TournamentService:
             return JSONResponse(
                 content={
                     "detail": "Datos del torneo actualizdo con éxito!",
-                    "tournament": TournamentDTO.model_validate(tournament).model_dump(mode="json") 
                 },
-                status_code= status.HTTP_200_OK
+                status_code= status.HTTP_204_NO_CONTENT
             )
         except Exception as e:
             raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "Error al intentar actualizar torneo")
@@ -243,14 +244,13 @@ class TournamentService:
             return JSONResponse(
                 content={
                     "detail": "Datos del torneo actualizdo con éxito!",
-                    "tournament": TournamentDTO.model_validate(tournament).model_dump(mode="json") 
                 },
-                status_code= status.HTTP_200_OK
+                status_code= status.HTTP_204_NO_CONTENT
             )
         except Exception as e:
             raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "Error al intentar actualizar torneo")
         
-    async def update_tournament(self, tournament: TournamentCreate, user: UserFull, image: UploadFile | None):
+    async def update_tournament(self, tournament: TournamentUpdate, user: UserFull, image: UploadFile | None):
         try:
             sttmt = select(Tournament).where(Tournament.id == tournament.id, Tournament.organizer_id == user.full.id)
             tournament: Tournament | None = (await self.session.exec(sttmt)).first()
@@ -307,7 +307,7 @@ class TournamentService:
         except Exception as e:
             raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "Error al intentar actualizar torneo")
         
-    def generate_matchups(num_participants):
+    async def generate_matchups_simple(self, num_participants):
         if num_participants not in [8, 16, 32, 64]:
             raise ValueError("La cantidad de participantes debe ser 8, 16, 32 o 64.")
 
@@ -322,17 +322,17 @@ class TournamentService:
 
         matchups = []
         round_number = 1
-        match_id = 1
+        round_id = 2
 
-        while num_participants != 1:
+        while num_participants >= round_id:
 
-            for i in range(0, num_participants, 2):
+            for i in range(0, round_id, 2):
                 match = {
                     "id": str(uuid.uuid4()),
-                    "name": rounds[num_participants],
+                    "name": rounds[round_id],
                     "nextMatchId": None,
                     "tournamentRoundText": str(round_number),
-                    "startTime": datetime.now(),
+                    "startTime": str(datetime.now()),
                     "state": None, 
                     "participants": [
                         {
@@ -352,12 +352,12 @@ class TournamentService:
                     ]
                 }
 
+                if len(matchups) > 0:
+                    match['nextMatchId'] = matchups[((len(matchups)+1)//2)-1]['id']
+                
                 matchups.append(match)
+                round_number += 1
 
-            num_participants = num_participants // 2
-        return matchups
+            round_id = round_id * 2
+        return json.dumps(matchups[::-1], indent=2)
 
-    # Ejemplo de uso:
-    matchups = generate_matchups(64)
-    for matchup in matchups:
-        print(matchup)
