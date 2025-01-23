@@ -8,7 +8,7 @@ from decouple import config
 import logging
 import aiomysql
 
-DATABASE_URL="mysql+aiomysql://root:MIvfXpYIUVAXNbsFpwXlxZtpiniBNAdV@junction.proxy.rlwy.net:53815/railway"
+DATABASE_URL="mysql+aiomysql://root:NoKHkKLXqYwZZXFXxRmWAVXcyXIMcBgq@roundhouse.proxy.rlwy.net:45044/railway"
 
 class DataBase:
     def __init__(self):
