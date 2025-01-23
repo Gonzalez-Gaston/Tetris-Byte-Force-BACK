@@ -83,6 +83,7 @@ async def get_name_tournaments(
 @tournament_router.put('/update_tournament/{tournament_id}', status_code= status.HTTP_204_NO_CONTENT)
 @authorization(roles=[RoleUser.ORGANIZER])
 async def update_tournament(
+    tournament_id: str,
     name: str= Form(...),
     description:str = Form(...),
     start: datetime= Form(...),
@@ -93,6 +94,7 @@ async def update_tournament(
 ):
     return await TournamentService(session).update_tournament(
         tournament= TournamentUpdate(
+            id= tournament_id,
             name= name,
             description= description,
             start= start,

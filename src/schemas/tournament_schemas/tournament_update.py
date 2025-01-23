@@ -3,6 +3,7 @@ from pydantic import BaseModel, field_validator, model_validator
 
 
 class TournamentUpdate(BaseModel):
+    id: str
     name: str
     description: str
     start: datetime
