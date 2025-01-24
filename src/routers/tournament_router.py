@@ -93,7 +93,7 @@ async def update_tournament(
     session: AsyncSession = Depends(db.get_session),
 ):
     return await TournamentService(session).update_tournament(
-        tournament= TournamentUpdate(
+        tournament_update= TournamentUpdate(
             id= tournament_id,
             name= name,
             description= description,
