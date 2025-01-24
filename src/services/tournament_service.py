@@ -19,6 +19,7 @@ from sqlmodel import select, or_
 from sqlmodel.ext.asyncio.session import AsyncSession
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import selectinload, joinedload
+import random
 
 from src.schemas.tournament_schemas.tournament_update import TournamentUpdate
 from src.schemas.user_schema.user_full import UserFull
@@ -240,9 +241,11 @@ class TournamentService:
             
             tournament.status = status_tour
             if status_tour == StatusTournament.CURSO:
-                sttmt_parts = select(TournamentParticipants).options(
-                    joinedload(TournamentParticipants.tournament)
-                    ).where(TournamentParticipants.tournament_id == tournament_id, TournamentParticipants.confirm == True)
+                sttmt_parts = select(TournamentParticipants).where(
+                    TournamentParticipants.tournament_id == tournament_id, TournamentParticipants.confirm == True
+                    ).join(Participant, Participant.id == TournamentParticipants.participant_id
+                           ).options(selectinload(TournamentParticipants.participant))
+                 
                 participants: List[TournamentParticipants] = (await self.session.exec(sttmt_parts)).unique().all()
 
                 if len(participants) == 0:
@@ -254,7 +257,8 @@ class TournamentService:
                     )
                 
                 new_data = await self.shuffle_participants(tournament.data, participants, tournament.number_participants)
-
+                
+                tournament.data = new_data
             tournament.is_open = False
 
             await self.session.commit()
@@ -381,6 +385,38 @@ class TournamentService:
 
 
     async def shuffle_participants(self, data: str, participants: TournamentParticipants, number_participants: int):
-        matchups = json.loads(data)
+        try:
+            matchups = json.loads(data)
+            array_generated = await self.generate_array(number_participants//2)
+            # list_participants = participants.model_copy()
+            random.shuffle(participants)
+
+            index = 0
+            count_part = 0
+            
+            while index < 2 and count_part < len(participants):
+                for i in array_generated:
+                    matchups[i-1]['participants'][index]['id'] = participants[count_part].participant.id
+                    matchups[i-1]['participants'][index]['name'] = participants[count_part].participant.username
+                    count_part += 1
+                index += 1
+
+            return json.dumps(matchups, indent=2)
+        except Exception as e:
+            raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "Error al intentar actualizar torneo")
+
+    async def generate_array(self, n):
+        if n & (n - 1) != 0: 
+            raise ValueError("El número debe ser una potencia de 2")
         
+        impares = [i for i in range(1, n + 1) if i % 2 != 0]
+        pares = [i for i in range(1, n + 1) if i % 2 == 0]
+        
+        resultado = []
+        for i in range(len(impares)):
+            resultado.append(impares[i])
+            if i < len(pares):
+                resultado.append(pares[-(i + 1)])
+        
+        return resultado
 
