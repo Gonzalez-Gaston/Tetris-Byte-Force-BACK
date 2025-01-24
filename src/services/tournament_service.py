@@ -250,7 +250,7 @@ class TournamentService:
         except Exception as e:
             raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "Error al intentar actualizar torneo")
         
-    async def update_tournament(self, tournament: TournamentUpdate, user: UserFull, image: UploadFile | None):
+    async def update_tournament(self, tournament_update: TournamentUpdate, user: UserFull, image: UploadFile | None):
         try:
             sttmt = select(Tournament).where(Tournament.id == tournament.id, Tournament.organizer_id == user.full.id)
             tournament: Tournament | None = (await self.session.exec(sttmt)).first()
@@ -279,10 +279,10 @@ class TournamentService:
                     status_code= status.HTTP_400_BAD_REQUEST
                 )
             
-            tournament.name = tournament.name
-            tournament.description = tournament.description
-            tournament.start = tournament.start
-            tournament.end = tournament.end
+            tournament.name = tournament_update.name
+            tournament.description = tournament_update.description
+            tournament.start = tournament_update.start
+            tournament.end = tournament_update.end
 
             result = {}
             if image is not None:
@@ -290,7 +290,7 @@ class TournamentService:
                     CloudinaryModel().upload_image, 
                     image,
                     "tournament",
-                    tournament.id
+                    tournament_update.id
                 )
 
             if image is not None:
@@ -332,7 +332,7 @@ class TournamentService:
                     "name": rounds[round_id],
                     "nextMatchId": None,
                     "tournamentRoundText": str(round_number),
-                    "startTime": str(datetime.now()),
+                    "startTime": str(round_number),
                     "state": None, 
                     "participants": [
                         {
