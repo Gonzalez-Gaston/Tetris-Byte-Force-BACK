@@ -11,6 +11,7 @@ from src.models.tournaments import StatusTournament, Tournament
 from src.models.user_model import User
 from src.schemas.organizer_schemas.organizer_dto import OrganizerDTO
 from src.schemas.participant_schemas.participant_dto import ParticipantDTO
+from src.schemas.tournament_schemas.data_update import DataUpdate
 from src.schemas.tournament_schemas.tournament_create import TournamentCreate
 from src.schemas.tournament_schemas.tournament_dto import TournamentDTO
 from src.schemas.tournament_schemas.tournament_response import TournamentResponse
@@ -174,7 +175,7 @@ class TournamentService:
                 detail="Error al intentar obtener torneos"
             )
         
-    async def update_data(self, tournament_id: str, data: str, user: UserFull):
+    async def update_data(self, tournament_id: str, data: DataUpdate, user: UserFull):
         try:
             sttmt = select(Tournament).where(Tournament.id == tournament_id, Tournament.organizer_id == user.full.id)
             tournament: Tournament | None = (await self.session.exec(sttmt)).first()
@@ -195,7 +196,7 @@ class TournamentService:
                     status_code= status.HTTP_401_UNAUTHORIZED
                 )
 
-            tournament.data = data
+            tournament.data = data.data
 
             await self.session.commit()
 
@@ -238,6 +239,23 @@ class TournamentService:
                 )
             
             tournament.status = status_tour
+            if status_tour == StatusTournament.CURSO:
+                sttmt_parts = select(TournamentParticipants).options(
+                    joinedload(TournamentParticipants.tournament)
+                    ).where(TournamentParticipants.tournament_id == tournament_id, TournamentParticipants.confirm == True)
+                participants: List[TournamentParticipants] = (await self.session.exec(sttmt_parts)).unique().all()
+
+                if len(participants) == 0:
+                    return JSONResponse(
+                        content={
+                            "detail": "No hay participantes confirmados", 
+                        },
+                        status_code= status.HTTP_400_BAD_REQUEST
+                    )
+                
+                new_data = await self.shuffle_participants(tournament.data, participants, tournament.number_participants)
+
+            tournament.is_open = False
 
             await self.session.commit()
 
@@ -361,4 +379,8 @@ class TournamentService:
             round_id = round_id * 2
         return json.dumps(matchups[::-1], indent=2)
 
+
+    async def shuffle_participants(self, data: str, participants: TournamentParticipants, number_participants: int):
+        matchups = json.loads(data)
+        
 
