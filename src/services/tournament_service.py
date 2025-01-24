@@ -252,7 +252,7 @@ class TournamentService:
         
     async def update_tournament(self, tournament_update: TournamentUpdate, user: UserFull, image: UploadFile | None):
         try:
-            sttmt = select(Tournament).where(Tournament.id == tournament.id, Tournament.organizer_id == user.full.id)
+            sttmt = select(Tournament).where(Tournament.id == tournament_update.id, Tournament.organizer_id == user.full.id)
             tournament: Tournament | None = (await self.session.exec(sttmt)).first()
 
             if tournament is None:
