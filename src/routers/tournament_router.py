@@ -9,6 +9,7 @@ from src.models.tournaments import FormatTournament, Tournament, StatusTournamen
 from src.models.user_model import RoleUser, User
 from src.schemas.organizer_schemas.organizer_create import OrganizerCreate
 from src.schemas.participant_schemas.participant_create import ParticipantCreate
+from src.schemas.tournament_schemas.data_update import DataUpdate
 from src.schemas.tournament_schemas.tournament_create import TournamentCreate
 from src.schemas.tournament_schemas.tournament_dto import ListTournamentDTO, TournamentDTO
 from src.schemas.tournament_schemas.tournament_response import TournamentResponse
@@ -101,7 +102,7 @@ async def update_tournament(
             end= end
         ), user= user, image= image)
 
-@tournament_router.put('/update_status/{tournament_id}', status_code= status.HTTP_201_CREATED)
+@tournament_router.put('/update_status/{tournament_id}', status_code= status.HTTP_204_NO_CONTENT)
 @authorization(roles=[RoleUser.ORGANIZER])
 async def update_status(
     tournament_id: str,
@@ -110,3 +111,14 @@ async def update_status(
     session: AsyncSession = Depends(db.get_session),
 ):
     return await TournamentService(session).update_status(status_tour, tournament_id, user)
+
+
+@tournament_router.put('/update_data/{tournament_id}', status_code= status.HTTP_204_NO_CONTENT)
+@authorization(roles=[RoleUser.ORGANIZER])
+async def update_data(
+    tournament_id: str,
+    data: DataUpdate,
+    user: UserFull = Depends(auth.get_current_user),
+    session: AsyncSession = Depends(db.get_session),
+):
+    return await TournamentService(session).update_data(tournament_id= tournament_id, data= data, user= user)
