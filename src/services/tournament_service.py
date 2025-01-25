@@ -329,7 +329,7 @@ class TournamentService:
             raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "Error al intentar actualizar torneo")
         
     async def generate_matchups_simple(self, num_participants):
-        if num_participants not in [8, 16, 32, 64]:
+        if num_participants not in [4, 8, 16, 32, 64]:
             raise ValueError("La cantidad de participantes debe ser 8, 16, 32 o 64.")
 
         rounds = {
@@ -381,6 +381,11 @@ class TournamentService:
 
             round_id = round_id * 2
         return json.dumps(matchups[::-1], indent=2)
+
+    async def generate_matchups_double(self, num_participants):
+        matchups_loser = json.loads(await self.generate_matchups_simple(num_participants//2))
+        for match in matchups_loser:
+            match['nextLooserMatchId'] = None
 
 
     async def shuffle_participants(self, data: str, participants: TournamentParticipants, number_participants: int):

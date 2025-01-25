@@ -162,7 +162,7 @@ class ParticipantService:
             list_tournaments:List[TournamentInscription] = [TournamentInscription(
                 tournament= TournamentInsc.model_validate(tournament.tournament),
                 inscription= InscriptionDTO.model_validate(tournament)
-            ).model_dump() for tournament in tournaments]
+            ).model_dump(mode='json') for tournament in tournaments]
 
             return JSONResponse(
                     content={"tournaments_ids": list_tournaments},
