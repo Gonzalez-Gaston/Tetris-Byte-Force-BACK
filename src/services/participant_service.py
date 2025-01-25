@@ -11,6 +11,7 @@ from src.schemas.participant_schemas.participant_update import ParticipantUpdate
 from sqlmodel import select, or_
 from sqlmodel.ext.asyncio.session import AsyncSession
 from fastapi.responses import JSONResponse
+from src.schemas.tournament_schemas.tournament_inscription import InscriptionDTO, TournamentInsc, TournamentInscription
 from src.schemas.user_schema.user_full import UserFull
 from sqlalchemy.orm import selectinload
 
@@ -151,14 +152,20 @@ class ParticipantService:
         
     async def registered_tournaments_ids(self, user: UserFull):
         try:
-            sttmt = (select(TournamentParticipants.tournament_id)
+            sttmt = (select(TournamentParticipants)
                         .join(Tournament, Tournament.id == TournamentParticipants.tournament_id)
                             # .options(selectinload(TournamentParticipants.tournament))
-                        .where(TournamentParticipants.participant_id == user.full.id, Tournament.status == StatusTournament.PROXIMO))
-            tournaments_ids: List[str] = (await self.session.exec(sttmt)).all()
+                        .where(TournamentParticipants.participant_id == user.full.id, Tournament.status == StatusTournament.PROXIMO)
+                        ).options(selectinload(TournamentParticipants.tournament))
+            tournaments: List[TournamentParticipants] = (await self.session.exec(sttmt)).all()
+
+            list_tournaments:List[TournamentInscription] = [TournamentInscription(
+                tournament= TournamentInsc.model_validate(tournament.tournament),
+                inscription= InscriptionDTO.model_validate(tournament)
+            ).model_dump() for tournament in tournaments]
 
             return JSONResponse(
-                    content={"tournaments_ids": tournaments_ids},
+                    content={"tournaments_ids": list_tournaments},
                     status_code= status.HTTP_200_OK
                 )
 

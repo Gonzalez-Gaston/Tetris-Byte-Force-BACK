@@ -6,6 +6,7 @@ from src.config.decorators import authorization
 from src.database.db import db
 from src.models.user_model import RoleUser
 from src.schemas.participant_schemas.participant_update import ParticipantUpdate
+from src.schemas.tournament_schemas.tournament_inscription import TournamentInscription
 from src.schemas.user_schema.user_full import UserFull
 from src.services.auth_service import AuthService
 from src.services.participant_service import ParticipantService
@@ -39,7 +40,7 @@ async def cancel_register_tournament(
 
 ############################### GET ###############################
 
-@participant_router.get('/registered_tournaments_ids', status_code= status.HTTP_200_OK, response_model= List[str])
+@participant_router.get('/registered_tournaments_ids', status_code= status.HTTP_200_OK, response_model= List[TournamentInscription])
 @authorization(roles=[RoleUser.PARTICIPANT])
 async def registered_tournaments_ids(
     user: UserFull = Depends(auth.get_current_user),

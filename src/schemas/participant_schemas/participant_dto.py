@@ -8,3 +8,17 @@ class ParticipantDTO(BaseModel):
 
     class Config:
         from_attributes = True
+
+class TournamentParticipantDTO(BaseModel):
+    id: str
+    confirm: bool
+
+    class Config:
+        from_attributes = True
+
+class ConjuntInscriptionDTO(BaseModel):
+    participant: ParticipantDTO
+    tournament_participant: TournamentParticipantDTO
+
+    class Config:
+        from_attributes = True

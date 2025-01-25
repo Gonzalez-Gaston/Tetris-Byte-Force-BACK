@@ -10,7 +10,7 @@ from src.models.tournament_participants import TournamentParticipants
 from src.models.tournaments import StatusTournament, Tournament
 from src.models.user_model import User
 from src.schemas.organizer_schemas.organizer_dto import OrganizerDTO
-from src.schemas.participant_schemas.participant_dto import ParticipantDTO
+from src.schemas.participant_schemas.participant_dto import ConjuntInscriptionDTO, ParticipantDTO, TournamentParticipantDTO
 from src.schemas.tournament_schemas.data_update import DataUpdate
 from src.schemas.tournament_schemas.tournament_create import TournamentCreate
 from src.schemas.tournament_schemas.tournament_dto import TournamentDTO
@@ -131,42 +131,41 @@ class TournamentService:
         
     async def get_tournament(self, id: str):
         try:
-            stmt = select(Tournament).options(
-                    joinedload(Tournament.organizer), joinedload(Tournament.participants)
-                    ).where(Tournament.id == id)
-            
+            stmt = (
+                select(Tournament)
+                .options(
+                    joinedload(Tournament.organizer),
+                    joinedload(Tournament.participants).joinedload(TournamentParticipants.participant)
+                )
+                .where(Tournament.id == id)
+            )
+
             tournament = (await self.session.exec(stmt)).unique().first()
 
             if tournament is None:
                 return JSONResponse(
-                    content={
-                        "detail": "Torneo no entontrado", 
-                    },
-                    status_code= status.HTTP_404_NOT_FOUND
+                    content={"detail": "Torneo no encontrado"},
+                    status_code=status.HTTP_404_NOT_FOUND
                 )
-            
 
+            list_participants: List[ConjuntInscriptionDTO] = [
+                ConjuntInscriptionDTO(
+                    participant=ParticipantDTO(**participant.participant.model_dump()),
+                    tournament_participant=TournamentParticipantDTO(**participant.model_dump())
+                )
+                for participant in tournament.participants
+            ]
 
-            list_participants: List[ParticipantDTO] = []
-
-            for participant in tournament.participants:
-                part: Participant = await self.session.get(Participant, participant.participant_id)
-                list_participants.append(ParticipantDTO(**part.model_dump()))
-
-            tour_resp: TournamentResponse = TournamentResponse(
-                **tournament.model_dump(), 
-                number_registered= len(tournament.participants),
-                organizer= OrganizerDTO(
-                    **tournament.organizer.model_dump()
-                ),
-                list_participants= list_participants
+            tour_resp = TournamentResponse(
+                **tournament.model_dump(),
+                number_registered=len(tournament.participants),
+                organizer=OrganizerDTO(**tournament.organizer.model_dump()),
+                list_participants=list_participants
             )
 
             return JSONResponse(
-                content={
-                    "tournament": tour_resp.model_dump(mode='json')
-                },
-                status_code= status.HTTP_200_OK
+                content={"tournament": tour_resp.model_dump(mode='json')},
+                status_code=status.HTTP_200_OK
             )
 
         except Exception as e:
