@@ -8,7 +8,7 @@ from decouple import config
 import logging
 import aiomysql
 
-DATABASE_URL="mysql+aiomysql://root:NoKHkKLXqYwZZXFXxRmWAVXcyXIMcBgq@roundhouse.proxy.rlwy.net:45044/railway"
+DATABASE_URL="mysql+aiomysql://root:rNgGwfejZVeYsPBmkLnAxwYjjRtfRAsl@autorack.proxy.rlwy.net:51913/railway"
 
 class DataBase:
     def __init__(self):
@@ -18,7 +18,7 @@ class DataBase:
         self.__db = config('DB_NAME')
         self.__port = int(config('DB_PORT'))
         # self.database_url = f"mysql+aiomysql://{self.__user}:{self.__passwd}@{self.__host}:{self.__port}/{self.__db}"
-        self.database_url = DATABASE_URL
+        self.database_url = config('DATABASE_URL')
         self.engine = create_async_engine(self.database_url, echo=True)
 
     async def create_database_if_not_exists(self):
