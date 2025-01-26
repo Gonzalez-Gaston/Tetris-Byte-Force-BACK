@@ -532,6 +532,8 @@ class TournamentService:
                         count_part += 1
                     index += 1
 
+                matchups['upper'] = upper 
+
             return json.dumps(matchups, indent=2)
         except Exception as e:
             raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "Error al intentar actualizar torneo")
