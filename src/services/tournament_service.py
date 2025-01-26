@@ -334,7 +334,7 @@ class TournamentService:
         if num_participants not in [4, 8, 16, 32, 64]:
             raise ValueError("La cantidad de participantes debe ser 8, 16, 32 o 64.")
 
-        list_uuid = [str(uuid.uuid4())[:8]  for i in range(num_participants-1)]
+        list_uuid = [str(uuid.uuid4())  for i in range(num_participants-1)]
 
         matchups = []
         round_number = 1
@@ -398,7 +398,7 @@ class TournamentService:
         if num_participants not in [8, 16, 32, 64]:
                     raise ValueError("La cantidad de participantes debe ser 8, 16, 32 o 64.")
 
-        list_uuid = [str(uuid.uuid4())[:8]  for i in range(num_participants-2)]
+        list_uuid = [str(uuid.uuid4()) for i in range(num_participants-2)]
 
         matchups = []
         round_number = 1
@@ -476,7 +476,7 @@ class TournamentService:
             value['startTime'] = f"Next {list_uuid[lap]}" ##sacar
 
         finalisima = {
-                "id": str(str(uuid.uuid4())[:8]),
+                "id": str(uuid.uuid4()),
                     "name": "Final 2",
                     "nextMatchId": None,
                     "nextLooserMatchId": None,
@@ -502,7 +502,7 @@ class TournamentService:
             }
         
         final_match = {
-                    "id": str(str(uuid.uuid4())[:8]),
+                    "id": str(uuid.uuid4()),
                     "name": "Final 1",
                     "nextMatchId": finalisima['id'],
                     "nextLooserMatchId": finalisima['id'],
