@@ -257,7 +257,7 @@ class TournamentService:
                         status_code= status.HTTP_400_BAD_REQUEST
                     )
                 
-                new_data = await self.shuffle_participants(tournament.data, participants, tournament.number_participants)
+                new_data = await self.shuffle_participants(tournament.data, participants, tournament.number_participants, tournament.type)
                 
                 tournament.data = new_data
             tournament.is_open = False
@@ -500,19 +500,37 @@ class TournamentService:
     
     async def shuffle_participants(self, data: str, participants: TournamentParticipants, number_participants: int, type: TypeTournament):
         try:
-            matchups = json.loads(data)
-            array_generated = await self.generate_array(number_participants//2)
-            random.shuffle(participants)
+            if type == TypeTournament.SIMPLE:
+                matchups = json.loads(data)
+                array_generated = await self.generate_array(number_participants//2)
+                random.shuffle(participants)
 
-            index = 0
-            count_part = 0
-            
-            while index < 2 and count_part < len(participants):
-                for i in array_generated:
-                    matchups[i-1]['participants'][index]['id'] = participants[count_part].participant.id
-                    matchups[i-1]['participants'][index]['name'] = participants[count_part].participant.username
-                    count_part += 1
-                index += 1
+                index = 0
+                count_part = 0
+                
+                while index < 2 and count_part < len(participants):
+                    for i in array_generated:
+                        matchups[i-1]['participants'][index]['id'] = participants[count_part].participant.id
+                        matchups[i-1]['participants'][index]['name'] = participants[count_part].participant.username
+                        count_part += 1
+                    index += 1
+
+            elif type == TypeTournament.DOUBLE:
+                matchups = json.loads(data)
+                upper = matchups['upper']
+                lower = matchups['lower']
+                array_generated = await self.generate_array(number_participants//2)
+                random.shuffle(participants)
+
+                index = 0
+                count_part = 0
+                
+                while index < 2 and count_part < len(participants):
+                    for i in array_generated:
+                        upper[i-1]['participants'][index]['id'] = participants[count_part].participant.id
+                        upper[i-1]['participants'][index]['name'] = participants[count_part].participant.username
+                        count_part += 1
+                    index += 1
 
             return json.dumps(matchups, indent=2)
         except Exception as e:
