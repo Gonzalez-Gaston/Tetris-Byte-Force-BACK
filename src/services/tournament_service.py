@@ -201,7 +201,7 @@ class TournamentService:
                     status_code= status.HTTP_401_UNAUTHORIZED
                 )
 
-            tournament.data = data.data
+            tournament.data = await self.compress_string(data.data)
 
             await self.session.commit()
 
@@ -263,6 +263,11 @@ class TournamentService:
                 new_data = await self.shuffle_participants(await self.decompress_string(tournament.data), participants, tournament.number_participants, tournament.type)
                 
                 tournament.data = await self.compress_string(new_data)
+
+            if status_tour == StatusTournament.FINALIZADO:
+                data_tournament = await self.decompress_string(tournament.data)
+                
+
             tournament.is_open = False
 
             await self.session.commit()
@@ -605,7 +610,6 @@ class TournamentService:
         return resultado
 
     async def compress_string(self, data):
-        # Comprimir el string y convertir a Base64
         compressed = zlib.compress(data.encode('utf-8'))
         return base64.b64encode(compressed).decode('utf-8')
     
