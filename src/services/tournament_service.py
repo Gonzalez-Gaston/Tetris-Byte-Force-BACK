@@ -270,6 +270,8 @@ class TournamentService:
                 results = await self.finished_tournament(number_participants= tournament.number_participants, data= data_tournament, type= tournament.type)
 
                 for participant in results:
+                    if participant is None: continue
+
                     sttmt = select(TournamentParticipants).where(TournamentParticipants.participant_id == participant)
                     participant_tour: TournamentParticipants | None = (await self.session.exec(sttmt)).first()
 
