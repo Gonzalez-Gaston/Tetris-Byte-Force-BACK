@@ -1,8 +1,10 @@
 from asyncio import to_thread
+import base64
 from datetime import datetime
 import json
 from typing import List
 import uuid
+import zlib
 from fastapi import HTTPException, UploadFile, status
 from src.models.cloudinary_model import CloudinaryModel
 from src.models.participant_model import Participant
@@ -36,7 +38,7 @@ class TournamentService:
             if tournament.type == TypeTournament.DOUBLE:
                 data = await self.generate_matchups_double(tournament.number_participants)
 
-            new_tournament: Tournament = Tournament(**tournament.model_dump(), data = data, organizer_id= user.full.id)
+            new_tournament: Tournament = Tournament(**tournament.model_dump(), data = await self.compress_string(data= data), organizer_id= user.full.id)
             
             result = {}
             if image is not None:
@@ -143,6 +145,7 @@ class TournamentService:
             )
 
             tournament = (await self.session.exec(stmt)).unique().first()
+            tournament.data = await self.decompress_string(tournament.data)
 
             if tournament is None:
                 return JSONResponse(
@@ -256,10 +259,10 @@ class TournamentService:
                         },
                         status_code= status.HTTP_400_BAD_REQUEST
                     )
-                tournament.data = await self.generate_matchups_double(tournament.number_participants)## sacar esto
-                new_data = await self.shuffle_participants(tournament.data, participants, tournament.number_participants, tournament.type)
+                # tournament.data = await self.generate_matchups_double(tournament.number_participants)## sacar esto
+                new_data = await self.shuffle_participants(await self.decompress_string(tournament.data), participants, tournament.number_participants, tournament.type)
                 
-                tournament.data = new_data
+                tournament.data = await self.compress_string(new_data)
             tournament.is_open = False
 
             await self.session.commit()
@@ -601,3 +604,11 @@ class TournamentService:
         
         return resultado
 
+    async def compress_string(self, data):
+        # Comprimir el string y convertir a Base64
+        compressed = zlib.compress(data.encode('utf-8'))
+        return base64.b64encode(compressed).decode('utf-8')
+    
+    async def decompress_string(self, compressed_data):
+        compressed = base64.b64decode(compressed_data.encode('utf-8'))
+        return zlib.decompress(compressed).decode('utf-8')
