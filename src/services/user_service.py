@@ -57,6 +57,32 @@ class UserService:
 
         except Exception as e:
             raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "Error al intentar loguear")
+        
+    async def logout(self, user, token, refresh_token):
+        try:
+            statement = select(HistorialRefreshToken).where(
+                HistorialRefreshToken.user_id == user.user.id,
+                HistorialRefreshToken.refresh_token == refresh_token,
+                HistorialRefreshToken.token == token
+                )
+            token: HistorialRefreshToken | None = (await self.session.exec(statement)).first()
+
+            if token is None:
+                return JSONResponse(
+                    content={"detail": "Credenciales incorrectas"},
+                    status_code=status.HTTP_400_BAD_REQUEST
+                )
+
+            await self.session.delete(token)
+            await self.session.commit()
+
+            return JSONResponse(
+                content={"detail": "Logout exitoso"},
+                status_code=status.HTTP_204_NO_CONTENT
+            )
+
+        except Exception as e:
+            raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "Error al intentar logout")
 
     async def create_participant(self, user: ParticipantCreate):
             try:
