@@ -498,11 +498,10 @@ class TournamentService:
 
         return json.dumps(tournament, indent=2)
     
-    async def shuffle_participants(self, data: str, participants: TournamentParticipants, number_participants: int):
+    async def shuffle_participants(self, data: str, participants: TournamentParticipants, number_participants: int, type: TypeTournament):
         try:
             matchups = json.loads(data)
             array_generated = await self.generate_array(number_participants//2)
-            # list_participants = participants.model_copy()
             random.shuffle(participants)
 
             index = 0

@@ -43,7 +43,7 @@ class TournamentCreate(BaseModel):
         if start is None or end is None:
             raise ValueError("Las fechas de inicio y fin son obligatorias.")
         
-        if start < now:
+        if start.date() < now.date():
             raise ValueError("La fecha de inicio no puede ser hoy o anterior.")
         if end <= start:
             raise ValueError("La fecha de fin debe ser posterior a la fecha de inicio.")
