@@ -7,7 +7,7 @@ from fastapi import HTTPException, UploadFile, status
 from src.models.cloudinary_model import CloudinaryModel
 from src.models.participant_model import Participant
 from src.models.tournament_participants import TournamentParticipants
-from src.models.tournaments import StatusTournament, Tournament
+from src.models.tournaments import StatusTournament, Tournament, TypeTournament
 from src.models.user_model import User
 from src.schemas.organizer_schemas.organizer_dto import OrganizerDTO
 from src.schemas.participant_schemas.participant_dto import ConjuntInscriptionDTO, ParticipantDTO, TournamentParticipantDTO
@@ -31,8 +31,10 @@ class TournamentService:
 
     async def create_tournament(self, tournament: TournamentCreate, user: UserFull, image: UploadFile | None):
         try:
-
-            data = await self.generate_matchups_simple(tournament.number_participants)
+            if tournament.type == TypeTournament.SIMPLE:
+                data = await self.generate_matchups_simple(tournament.number_participants)
+            if tournament.type == TypeTournament.DOUBLE:
+                data = await self.generate_matchups_double(tournament.number_participants)
 
             new_tournament: Tournament = Tournament(**tournament.model_dump(), data = data, organizer_id= user.full.id)
             
@@ -328,33 +330,49 @@ class TournamentService:
         except Exception as e:
             raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "Error al intentar actualizar torneo")
         
-    async def generate_matchups_simple(self, num_participants):
+    async def generate_matchups_simple(self, num_participants, double=False):
         if num_participants not in [4, 8, 16, 32, 64]:
             raise ValueError("La cantidad de participantes debe ser 8, 16, 32 o 64.")
 
-        rounds = {
-            2: 'Final',
-            4: 'Semifinal',
-            8: '4tos de Final',
-            16: '8vos de Final',
-            32: '16vos de Final',
-            64: '32vos de Final'
-        }
+        list_uuid = [str(uuid.uuid4()) for i in range(num_participants-1)]
 
         matchups = []
         round_number = 1
-        round_id = 2
+        lap = 0
+        base_num = num_participants//2
+        base_index = num_participants//2
 
-        while num_participants >= round_id:
+        for index, value in enumerate(list_uuid):
+          if index != 0 and index % base_num == 0:
+            if type(round_number) == int:
+              round_number += 1
+            base_num = base_num // 2
 
-            for i in range(0, round_id, 2):
-                match = {
-                    "id": str(uuid.uuid4()),
-                    "name": rounds[round_id],
-                    "nextMatchId": None,
-                    "tournamentRoundText": str(round_number),
-                    "startTime": str(round_number),
-                    "state": None, 
+          if double == True:
+            if base_num == 1:
+              name = 'Semifinal'
+          else: 
+            if base_num == 2:
+              name = 'Semifinal'
+            if base_num == 1:
+              name = 'Final'
+
+          if lap == 2:
+            lap = 0
+          if lap == 0:
+            get_uuid = None if index == len(list_uuid)-1 else list_uuid[index+base_index]
+          if lap == 1:
+            get_uuid = None if index == len(list_uuid)-1 else list_uuid[index+base_index-lap]
+            base_index -= 1
+            
+          
+          match = {
+                    "id": list_uuid[index],
+                    "name": name if double and base_num == 1 else (name if not double and base_num in [2,1] else f"Round {round_number}"),
+                    "nextMatchId": get_uuid,
+                    "tournamentRoundText": str(index+1),
+                    "startTime": str(index+1),
+                    "state": None,
                     "participants": [
                         {
                             "id": None,
@@ -372,22 +390,114 @@ class TournamentService:
                         }
                     ]
                 }
+          lap += 1
 
-                if len(matchups) > 0:
-                    match['nextMatchId'] = matchups[((len(matchups)+1)//2)-1]['id']
-                
-                matchups.append(match)
+          matchups.append(match)
+
+        return json.dumps(matchups, indent=2)
+
+    async def generate_matchups_loser(self, num_participants):
+        if num_participants not in [8, 16, 32, 64]:
+                    raise ValueError("La cantidad de participantes debe ser 8, 16, 32 o 64.")
+
+        list_uuid = [str(uuid.uuid4()) for i in range(num_participants-2)]
+
+        matchups = []
+        round_number = 1
+        lap = 0
+
+        base_num = num_participants//4
+        
+        for index, value in enumerate(list_uuid):
+            if index != 0 and index % base_num == 0:
                 round_number += 1
+                lap += 1
+            if lap == 2:
+                lap = 0
+                base_num = base_num // 2
 
-            round_id = round_id * 2
-        return json.dumps(matchups[::-1], indent=2)
+            match = {
+                "id": list_uuid[index],
+                "name": f"Losers Round {round_number}",
+                "nextMatchId": None if index == len(list_uuid)-1 else list_uuid[index+base_num],
+                "nextLooserMatchId": None,
+                "tournamentRoundText": str(index+1),
+                "startTime": str(index+1),
+                "state": None, 
+                "participants": [
+                    {
+                        "id": None,
+                        "resultText": None,
+                        "isWinner": False,
+                        "status": None,
+                        "name": None
+                    },
+                    {
+                        "id": None,
+                        "resultText": None,
+                        "isWinner": False,
+                        "status": None,
+                        "name": None
+                    }
+                ]
+            }
+            
+            matchups.append(match)
+            
+
+        return matchups, list_uuid,
 
     async def generate_matchups_double(self, num_participants):
-        matchups_loser = json.loads(await self.generate_matchups_simple(num_participants//2))
-        for match in matchups_loser:
-            match['nextLooserMatchId'] = None
+        matchups_winner = json.loads(await self.generate_matchups_simple(num_participants, double=True))
+        
+        losers, list_uuid = await self.generate_matchups_loser(num_participants)
+        lap = -1
+        
+        for index,value in enumerate(matchups_winner):
+            if index <= num_participants//2:
+                if index % 2 == 0:
+                    lap += 1
+                else:
+                    lap += 1
+            value['nextLooserMatchId'] = list_uuid[lap]
 
+        final_match = {
+                    "id": str(uuid.uuid4()),
+                    "name": "Finales",
+                    "nextMatchId": None,
+                    "nextLooserMatchId": None,
+                    "tournamentRoundText": str(len(losers)+len(matchups_winner)),
+                    "startTime": str(len(losers)+len(matchups_winner)),
+                    "state": None,
+                    "participants": [
+                        {
+                            "id": None,
+                            "resultText": None,
+                            "isWinner": False,
+                            "status": None,
+                            "name": None
+                        },
+                        {
+                            "id": None,
+                            "resultText": None,
+                            "isWinner": False,
+                            "status": None,
+                            "name": None
+                        }
+                    ]
+                }
+        losers[-1]['nextMatchId'] = final_match['id']
+        matchups_winner[-1]['nextMatchId'] = final_match['id']
 
+        matchups_winner.append(final_match)
+
+        tournament = {
+            'upper': matchups_winner,
+            'lower': losers
+        }
+
+        return json.dumps(tournament, indent=2)
+    
     async def shuffle_participants(self, data: str, participants: TournamentParticipants, number_participants: int):
         try:
             matchups = json.loads(data)

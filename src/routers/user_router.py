@@ -41,6 +41,15 @@ async def login(
 ):
     return await UserService(session).login(credentials)
 
+@user_router.post('/logout')
+async def login(
+    refresh_token: str =  Form(),
+    user: UserFull = Depends(auth.get_current_user), 
+    session: AsyncSession = Depends(db.get_session),
+    token: str = Depends(oauth_scheme),
+):
+    return await UserService(session).logout(user= user, refresh_token= refresh_token, token= token)
+
 @user_router.post('/refresh_token')
 async def refresh_token(
     refresh_token: str =  Form(),
