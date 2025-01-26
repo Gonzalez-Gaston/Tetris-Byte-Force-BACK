@@ -256,7 +256,7 @@ class TournamentService:
                         },
                         status_code= status.HTTP_400_BAD_REQUEST
                     )
-                
+                tournament.data = await self.generate_matchups_double(tournament.number_participants)## sacar esto
                 new_data = await self.shuffle_participants(tournament.data, participants, tournament.number_participants, tournament.type)
                 
                 tournament.data = new_data
@@ -334,7 +334,7 @@ class TournamentService:
         if num_participants not in [4, 8, 16, 32, 64]:
             raise ValueError("La cantidad de participantes debe ser 8, 16, 32 o 64.")
 
-        list_uuid = [str(uuid.uuid4()) for i in range(num_participants-1)]
+        list_uuid = [str(uuid.uuid4())[:8]  for i in range(num_participants-1)]
 
         matchups = []
         round_number = 1
@@ -343,56 +343,54 @@ class TournamentService:
         base_index = num_participants//2
 
         for index, value in enumerate(list_uuid):
-          if index != 0 and index % base_num == 0:
-            if type(round_number) == int:
-              round_number += 1
-            base_num = base_num // 2
+            if index != 0 and index % base_num == 0:
+                base_num = base_num // 2
 
-          if double == True:
-            if base_num == 1:
-              name = 'Semifinal'
-          else: 
-            if base_num == 2:
-              name = 'Semifinal'
-            if base_num == 1:
-              name = 'Final'
+            if double == True:
+                if base_num == 1:
+                    name = 'Semi Final'
+            else: 
+                if base_num == 2:
+                    name = 'Semi Final'
+                if base_num == 1:
+                    name = 'Final'
 
-          if lap == 2:
-            lap = 0
-          if lap == 0:
-            get_uuid = None if index == len(list_uuid)-1 else list_uuid[index+base_index]
-          if lap == 1:
-            get_uuid = None if index == len(list_uuid)-1 else list_uuid[index+base_index-lap]
-            base_index -= 1
+            if lap == 2:
+                lap = 0
+            if lap == 0:
+                get_uuid = None if index == len(list_uuid)-1 else list_uuid[index+base_index]
+            if lap == 1:
+                get_uuid = None if index == len(list_uuid)-1 else list_uuid[index+base_index-lap]
+                base_index -= 1
             
           
-          match = {
-                    "id": list_uuid[index],
-                    "name": name if double and base_num == 1 else (name if not double and base_num in [2,1] else f"Round {round_number}"),
-                    "nextMatchId": get_uuid,
-                    "tournamentRoundText": str(index+1),
-                    "startTime": str(index+1),
-                    "state": None,
-                    "participants": [
-                        {
-                            "id": None,
-                            "resultText": None,
-                            "isWinner": False,
-                            "status": None,
-                            "name": None
-                        },
-                        {
-                            "id": None,
-                            "resultText": None,
-                            "isWinner": False,
-                            "status": None,
-                            "name": None
-                        }
-                    ]
-                }
-          lap += 1
+            match = {
+                "id": list_uuid[index],
+                "name": name if double and base_num == 1 else (name if not double and base_num in [2,1] else f"Round {round_number}"),
+                "nextMatchId": get_uuid,
+                "tournamentRoundText": list_uuid[index],#str(index+1),
+                "startTime": list_uuid[index], # str(datetime.now().date()),
+                "state": 'SCHEDULED',
+                "participants": [
+                    {
+                        "id": None,
+                        "resultText": None,
+                        "isWinner": False,
+                        "status": None,
+                        "name": None
+                    },
+                    {
+                        "id": None,
+                        "resultText": None,
+                        "isWinner": False,
+                        "status": None,
+                        "name": None
+                    }
+                ]
+            }
+            lap += 1
 
-          matchups.append(match)
+            matchups.append(match)
 
         return json.dumps(matchups, indent=2)
 
@@ -400,14 +398,15 @@ class TournamentService:
         if num_participants not in [8, 16, 32, 64]:
                     raise ValueError("La cantidad de participantes debe ser 8, 16, 32 o 64.")
 
-        list_uuid = [str(uuid.uuid4()) for i in range(num_participants-2)]
+        list_uuid = [str(uuid.uuid4())[:8]  for i in range(num_participants-2)]
 
         matchups = []
         round_number = 1
         lap = 0
-
+        top = 0
         base_num = num_participants//4
-        
+        base_index = num_participants//4
+  
         for index, value in enumerate(list_uuid):
             if index != 0 and index % base_num == 0:
                 round_number += 1
@@ -416,10 +415,23 @@ class TournamentService:
                 lap = 0
                 base_num = base_num // 2
 
+            if top == 2:
+                top = 0
+                base_index -= 1
+
+            if round_number % 2 == 0:
+                get_uuid = None if index == len(list_uuid)-1 else list_uuid[index+base_index-top]
+                top +=1
+
+
+            if round_number % 2 == 1:
+                get_uuid = None if index == len(list_uuid)-1 else list_uuid[index+base_num]
+      
+
             match = {
                 "id": list_uuid[index],
                 "name": f"Losers Round {round_number}",
-                "nextMatchId": None if index == len(list_uuid)-1 else list_uuid[index+base_num],
+                "nextMatchId": get_uuid, #None if index == len(list_uuid)-1 else list_uuid[index+base_num],
                 "nextLooserMatchId": None,
                 "tournamentRoundText": str(index+1),
                 "startTime": str(index+1),
@@ -441,8 +453,9 @@ class TournamentService:
                     }
                 ]
             }
-            
+
             matchups.append(match)
+    
             
 
         return matchups, list_uuid,
@@ -457,13 +470,14 @@ class TournamentService:
             if index <= num_participants//2:
                 if index % 2 == 0:
                     lap += 1
-                else:
-                    lap += 1
+            else:
+                lap += 1
             value['nextLooserMatchId'] = list_uuid[lap]
+            value['startTime'] = f"Next {list_uuid[lap]}" ##sacar
 
-        final_match = {
-                    "id": str(uuid.uuid4()),
-                    "name": "Finales",
+        finalisima = {
+                "id": str(str(uuid.uuid4())[:8]),
+                    "name": "Final 2",
                     "nextMatchId": None,
                     "nextLooserMatchId": None,
                     "tournamentRoundText": str(len(losers)+len(matchups_winner)),
@@ -485,11 +499,41 @@ class TournamentService:
                             "name": None
                         }
                     ]
+            }
+        
+        final_match = {
+                    "id": str(str(uuid.uuid4())[:8]),
+                    "name": "Final 1",
+                    "nextMatchId": finalisima['id'],
+                    "nextLooserMatchId": finalisima['id'],
+                    "tournamentRoundText": str(len(losers)+len(matchups_winner)),
+                    "startTime": str(len(losers)+len(matchups_winner)),
+                    "state": None,
+                    "participants": [
+                        {
+                            "id": None,
+                            "resultText": None,
+                            "isWinner": False,
+                            "status": None,
+                            "name": None
+                        },
+                        {
+                            "id": None,
+                            "resultText": None,
+                            "isWinner": False,
+                            "status": None,
+                            "name": None
+                        }
+                    ]
                 }
+        
+        
+        
         losers[-1]['nextMatchId'] = final_match['id']
         matchups_winner[-1]['nextMatchId'] = final_match['id']
 
         matchups_winner.append(final_match)
+        matchups_winner.append(finalisima)
 
         tournament = {
             'upper': matchups_winner,
@@ -513,6 +557,8 @@ class TournamentService:
                         matchups[i-1]['participants'][index]['id'] = participants[count_part].participant.id
                         matchups[i-1]['participants'][index]['name'] = participants[count_part].participant.username
                         count_part += 1
+                        if count_part == len(participants):
+                            break
                     index += 1
 
             elif type == TypeTournament.DOUBLE:
@@ -530,6 +576,8 @@ class TournamentService:
                         upper[i-1]['participants'][index]['id'] = participants[count_part].participant.id
                         upper[i-1]['participants'][index]['name'] = participants[count_part].participant.username
                         count_part += 1
+                        if count_part == len(participants):
+                            break
                     index += 1
 
                 matchups['upper'] = upper 
