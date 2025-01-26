@@ -13,6 +13,8 @@ class TournamentParticipants(SQLModel, table=True):
     confirm: bool = Field(default=False)
     participant: Optional["Participant"] = Relationship(back_populates="tournaments")
     tournament: Optional["Tournament"] = Relationship(back_populates="participants")
+    win: int = Field(default=0)
+    lose: int = Field(default=0)
 
     @property
     def calculate_value_point(self) -> float:

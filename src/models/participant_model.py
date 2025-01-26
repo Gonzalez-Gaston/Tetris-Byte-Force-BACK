@@ -15,5 +15,4 @@ class Participant(SQLModel, table=True):
     url_image: str | None = Field(default=None)
     user_id: str = Field(foreign_key='users.id', index=True)
     tournaments: List["TournamentParticipants"] = Relationship(back_populates="participant")
-    win: int = Field(default=0)
-    lose: int = Field(default=0)
+    

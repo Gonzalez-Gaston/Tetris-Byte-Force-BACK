@@ -265,8 +265,19 @@ class TournamentService:
                 tournament.data = await self.compress_string(new_data)
 
             if status_tour == StatusTournament.FINALIZADO:
-                data_tournament = await self.decompress_string(tournament.data)
-                
+                data = tournament.data
+                data_tournament = await self.decompress_string(data)
+                results = await self.finished_tournament(number_participants= tournament.number_participants, data= data_tournament, type= tournament.type)
+
+                for participant in results:
+                    sttmt = select(TournamentParticipants).where(TournamentParticipants.participant_id == participant)
+                    participant_tour: TournamentParticipants | None = (await self.session.exec(sttmt)).first()
+
+                    if participant_tour is None: continue
+
+                    participant_tour.points = results[participant]['points']
+                    participant_tour.win = results[participant]['win']
+                    participant_tour.lose = results[participant]['lose']
 
             tournament.is_open = False
 
@@ -356,10 +367,10 @@ class TournamentService:
 
             if double == True:
                 if base_num == 1:
-                    name = 'Semi Final'
+                    name = 'Semifinal'
             else: 
                 if base_num == 2:
-                    name = 'Semi Final'
+                    name = 'Semifinal'
                 if base_num == 1:
                     name = 'Final'
 
@@ -377,7 +388,7 @@ class TournamentService:
                 "name": name if double and base_num == 1 else (name if not double and base_num in [2,1] else f"Round {round_number}"),
                 "nextMatchId": get_uuid,
                 "tournamentRoundText": list_uuid[index],#str(index+1),
-                "startTime": list_uuid[index], # str(datetime.now().date()),
+                "startTime": str(datetime.now().date()),
                 "state": 'SCHEDULED',
                 "participants": [
                     {
@@ -442,7 +453,7 @@ class TournamentService:
                 "nextMatchId": get_uuid, #None if index == len(list_uuid)-1 else list_uuid[index+base_num],
                 "nextLooserMatchId": None,
                 "tournamentRoundText": str(index+1),
-                "startTime": str(index+1),
+                "startTime": str(datetime.now().date()),
                 "state": None, 
                 "participants": [
                     {
@@ -616,3 +627,37 @@ class TournamentService:
     async def decompress_string(self, compressed_data):
         compressed = base64.b64decode(compressed_data.encode('utf-8'))
         return zlib.decompress(compressed).decode('utf-8')
+
+    async def finished_tournament(self, number_participants: int, data: str, type: TypeTournament):
+        try:
+            points = {
+                64: {'Final G': {'point': 800}, 'Final P': {'point': 400}, 'Semifinal': {'point': 200}, 'Round4': {'point': 100}, 'Round 3': {'point': 50}, 'Round 2': {'point': 25}, 'Round 1': {'point': 0}},
+                32: {'Final G': {'point': 400}, 'Final P': {'point': 200}, 'Semifinal': {'point': 100}, 'Round3': {'point': 50}, 'Round 2': {'point': 25}, 'Round 1': {'point': 0}},
+                16: {'Final G': {'point': 200}, 'Final P': {'point': 100}, 'Semifinal': {'point': 50}, 'Round2': {'point': 25}, 'Round 1': {'point': 0}},
+                8: {'Final G': {'point': 100}, 'Final P': {'point': 50}, 'Semifinal': {'point': 25}, 'Round 1': {'point': 0}},
+            }
+
+            participants = {}
+            list_points = points[number_participants]
+
+            if type == TypeTournament.SIMPLE:
+                matchups = json.loads(data)
+                for matchs in matchups:
+                    for participant in matchs['participants']:
+                        if not participant['id'] in participants:
+                          participants[participant['id']] = {'points': None, 'win': 0, 'lose': 0}
+                        participants[participant['id']]['win' if participant['isWinner'] == True else 'lose'] += 1
+                        if participant['isWinner'] == False:
+                            if matchs['name'] == 'Final':
+                                participants[participant['id']]['points'] = list_points['Final P']['point']
+                            else :
+                                participants[participant['id']]['points'] = list_points[matchs['name']]['point']
+                        if matchs['name'] == 'Final' and participant['isWinner'] == True:
+                            participants[participant['id']]['points'] = list_points['Final G']['point']
+            elif type == TypeTournament.DOUBLE:
+                participants = {}
+
+            return participants
+            
+        except Exception as e:
+            raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "Error al intentar finalizar torneo")
