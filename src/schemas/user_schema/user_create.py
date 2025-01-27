@@ -20,8 +20,8 @@ class UserCreate(BaseModel):
     
     @field_validator('username')
     def username_validator(cls, username):
-        if len(username) < 3 or len(username) > 10:
-            raise ValueError('El username debe contener entre 3 y 10 caracteres')
+        if len(username) < 3 or len(username) > 20:
+            raise ValueError('El username debe contener entre 3 y 20 caracteres')
         if ' ' in username:
             raise ValueError('El username no puede contener espacios')
         return username

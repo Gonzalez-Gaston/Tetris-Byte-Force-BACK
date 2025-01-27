@@ -1,5 +1,4 @@
 #MYSQL
-
 from sqlmodel import SQLModel
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlmodel.ext.asyncio.session import AsyncSession
@@ -7,8 +6,6 @@ from sqlalchemy.orm import sessionmaker
 from decouple import config
 import logging
 import aiomysql
-
-DATABASE_URL="mysql+aiomysql://root:rNgGwfejZVeYsPBmkLnAxwYjjRtfRAsl@autorack.proxy.rlwy.net:51913/railway"
 
 class DataBase:
     def __init__(self):

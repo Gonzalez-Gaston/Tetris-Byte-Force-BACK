@@ -61,6 +61,13 @@ async def participant_update(
 ):
     return await ParticipantService(session).participant_update(user, image, ParticipantUpdate(first_name=first_name, last_name=last_name, date_of_birth=date_of_birth))
 
+@participant_router.put('/get_ranking')
+async def get_ranking(
+    session: AsyncSession = Depends(db.get_session),
+):
+    return await ParticipantService(session).get_ranking()
+
+
 ############################### PUT ###############################
 
 @participant_router.put('/confirm_participation/{tournament_id}', status_code= status.HTTP_204_NO_CONTENT)
