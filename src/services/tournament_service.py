@@ -687,11 +687,9 @@ class TournamentService:
                     status_code= status.HTTP_404_NOT_FOUND
                 )
 
-            sttmt_part = select(Participant).join(
-                TournamentParticipants, Participant.id == TournamentParticipants.participant_id
-                ).options(selectinload(Participant.tournaments)
-                          ).where(TournamentParticipants.tournament_id == tournament_id)
-            participants: List[Participant] = (await self.session.exec(sttmt_part)).unique().all()
+            sttmt_part = select(Participant).options(selectinload(Participant.tournaments)
+                          )
+            participants: List[Participant] = (await self.session.exec(sttmt_part)).all()
 
             for index, participant in enumerate(participants):
                 if len(participant.tournaments) == 0:
