@@ -494,7 +494,9 @@ class TournamentService:
             else:
                 lap += 1
             value['nextLooserMatchId'] = list_uuid[lap]
-            value['startTime'] = f"Next {list_uuid[lap]}" ##sacar
+            if value['name'] == 'Semifinal':
+                value['nextLooserMatchId'] = list_uuid[-1]
+            # value['startTime'] = f"Next {list_uuid[lap]}" ##sacar
 
         finalisima = {
                 "id": str(uuid.uuid4()),
