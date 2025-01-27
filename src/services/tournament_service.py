@@ -582,6 +582,11 @@ class TournamentService:
                             break
                     index += 1
 
+                for march in matchups[:len(participants)//2]:
+                    for participant in march['participants']:
+                        if participant['id'] is None:
+                            participant['state'] = 'WALK_OVER'
+
             elif type == TypeTournament.DOUBLE:
                 matchups = json.loads(data)
                 upper = matchups['upper']
@@ -600,6 +605,11 @@ class TournamentService:
                         if count_part == len(participants):
                             break
                     index += 1
+
+                for march in upper[:len(participants)//2]:
+                    for participant in march['participants']:
+                        if participant['id'] is None:
+                            participant['state'] = 'WALK_OVER'
 
                 matchups['upper'] = upper 
 
@@ -663,3 +673,41 @@ class TournamentService:
             
         except Exception as e:
             raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "Error al intentar finalizar torneo")
+             
+    async def test_tournament_register(self, tournament_id: str, limite: int):
+        try:
+            sttmt = select(Tournament).where(Tournament.id == tournament_id)
+            tournament: Tournament | None = (await self.session.exec(sttmt)).first()
+
+            if tournament is None:
+                return JSONResponse(
+                    content={
+                        "detail": "Torneo no entontrado", 
+                    },
+                    status_code= status.HTTP_404_NOT_FOUND
+                )
+
+            sttmt_part = select(Participant).join(
+                TournamentParticipants, Participant.id == TournamentParticipants.participant_id
+                ).options(selectinload(Participant.tournaments)
+                          ).where(TournamentParticipants.tournament_id == tournament_id)
+            participants: List[Participant] = (await self.session.exec(sttmt_part)).unique().all()
+
+            for index, participant in enumerate(participants):
+                if len(participant.tournaments) == 0:
+                    self.session.add(TournamentParticipants(participant_id= participant.id, tournament_id= tournament_id, confirm= True))
+                if index == limite:
+                    break
+
+            await self.session.commit()
+
+            return JSONResponse(
+                content={
+                    "detail": "listo papu, registrados y confirmados!"
+                },
+                status_code= status.HTTP_200_OK
+            )
+        except Exception as e:
+            raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "Error al intentar obtener torneo")
+
+

@@ -122,3 +122,29 @@ async def update_data(
     session: AsyncSession = Depends(db.get_session),
 ):
     return await TournamentService(session).update_data(tournament_id= tournament_id, data= data, user= user)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+############################### TEST ###############################
+@tournament_router.post('/test_tournament_register/{tournament_id}', status_code= status.HTTP_201_CREATED)
+# @authorization(roles=[RoleUser.ORGANIZER])
+async def test_tournament_register(
+    tournament_id: str,
+    limite: int = Query(...),
+    # user: UserFull = Depends(auth.get_current_user),
+    session: AsyncSession = Depends(db.get_session),
+):
+    return await TournamentService(session).test_tournament_register(tournament_id, limite)

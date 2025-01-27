@@ -2,11 +2,13 @@ from asyncio import to_thread
 from datetime import datetime, timedelta
 from typing import List
 from fastapi import APIRouter, HTTPException, UploadFile, status
+from sqlalchemy import func
 from src.models.banned_model import UserBanned
 from src.models.cloudinary_model import CloudinaryModel
 from src.models.participant_model import Participant
 from src.models.tournament_participants import TournamentParticipants
 from src.models.tournaments import StatusTournament, Tournament
+from src.schemas.participant_schemas.participant_ranking import ParticipantRanking
 from src.schemas.participant_schemas.participant_update import ParticipantUpdate
 from sqlmodel import select, or_
 from sqlmodel.ext.asyncio.session import AsyncSession
@@ -222,3 +224,43 @@ class ParticipantService:
         except Exception as e:
             raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "Error al intentar confirmar participación")
 
+    async def get_ranking(self):
+        try:
+            sttmt = (
+                select(
+                    TournamentParticipants.participant.id,
+                    TournamentParticipants.participant.username,
+                    TournamentParticipants.participant.url_image,
+                    TournamentParticipants.participant.user_id,
+                    func.sum(TournamentParticipants.points).label("points"),
+                    func.sum(TournamentParticipants.win).label("win"),
+                    func.sum(TournamentParticipants.lose).label("lose"),
+                )
+                .join(TournamentParticipants.participant)
+                .group_by(
+                    TournamentParticipants.participant.id,
+                    TournamentParticipants.participant.username,
+                    TournamentParticipants.participant.url_image,
+                    TournamentParticipants.participant.user_id,
+                )
+            )
+
+            # Ejecutar la consulta
+            results = (await self.session.exec(sttmt)).all()
+
+            ranking: List[ParticipantRanking] = [
+                ParticipantRanking(
+                    id=row.id,
+                    username=row.username,
+                    url_imgae=row.url_image,
+                    user_id=row.user_id,
+                    points=row.points,
+                    win=row.win,
+                    lose=row.lose,
+                ).model_dump()
+                for row in results
+            ]
+
+            return ranking
+        except Exception as e:
+            raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "Error al intentar obtener ranking")
