@@ -272,7 +272,7 @@ class TournamentService:
                 for participant in results:
                     if participant is None: continue
 
-                    sttmt = select(TournamentParticipants).where(TournamentParticipants.participant_id == participant)
+                    sttmt = select(TournamentParticipants).where(TournamentParticipants.participant_id == participant, TournamentParticipants.tournament_id == tournament_id)
                     participant_tour: TournamentParticipants | None = (await self.session.exec(sttmt)).first()
 
                     if participant_tour is None: continue
@@ -366,6 +366,7 @@ class TournamentService:
         for index, value in enumerate(list_uuid):
             if index != 0 and index % base_num == 0:
                 base_num = base_num // 2
+                round_number += 1
 
             if double == True:
                 if base_num == 1:
@@ -486,17 +487,22 @@ class TournamentService:
         
         losers, list_uuid = await self.generate_matchups_loser(num_participants)
         lap = -1
+        base_index = num_participants // 4
         
-        for index,value in enumerate(matchups_winner):
+        for index, value in enumerate(matchups_winner):
             if index <= num_participants//2:
                 if index % 2 == 0:
                     lap += 1
             else:
                 lap += 1
+                if base_index != 0 and lap % base_index == 0:
+                  base_index = base_index // 2  
+                  lap += base_index
+            
+
             value['nextLooserMatchId'] = list_uuid[lap]
             if value['name'] == 'Semifinal':
                 value['nextLooserMatchId'] = list_uuid[-1]
-            # value['startTime'] = f"Next {list_uuid[lap]}" ##sacar
 
         finalisima = {
                 "id": str(uuid.uuid4()),

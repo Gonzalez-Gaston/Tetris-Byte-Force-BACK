@@ -228,20 +228,20 @@ class ParticipantService:
         try:
             sttmt = (
                 select(
-                    TournamentParticipants.participant.id,
-                    TournamentParticipants.participant.username,
-                    TournamentParticipants.participant.url_image,
-                    TournamentParticipants.participant.user_id,
+                    TournamentParticipants.participant_id,
+                    Participant.username.label("username"),
+                    Participant.url_image.label("url_image"),
+                    Participant.user_id.label("user_id"),
                     func.sum(TournamentParticipants.points).label("points"),
                     func.sum(TournamentParticipants.win).label("win"),
                     func.sum(TournamentParticipants.lose).label("lose"),
                 )
-                .join(TournamentParticipants.participant)
+                .join(Participant, Participant.id == TournamentParticipants.participant_id)
                 .group_by(
-                    TournamentParticipants.participant.id,
-                    TournamentParticipants.participant.username,
-                    TournamentParticipants.participant.url_image,
-                    TournamentParticipants.participant.user_id,
+                    TournamentParticipants.participant_id,
+                    Participant.username,
+                    Participant.url_image,
+                    Participant.user_id,
                 )
             )
 
@@ -250,17 +250,18 @@ class ParticipantService:
 
             ranking: List[ParticipantRanking] = [
                 ParticipantRanking(
-                    id=row.id,
+                    id=row.participant_id,
                     username=row.username,
                     url_imgae=row.url_image,
                     user_id=row.user_id,
-                    points=row.points,
-                    win=row.win,
-                    lose=row.lose,
+                    points=int(row.points or 0),
+                    win=int(row.win or 0),
+                    lose=int(row.lose or 0),
                 ).model_dump()
                 for row in results
             ]
 
-            return ranking
+            return sorted(ranking, key=lambda x: x['points'], reverse=True)
         except Exception as e:
+            print(e)
             raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "Error al intentar obtener ranking")

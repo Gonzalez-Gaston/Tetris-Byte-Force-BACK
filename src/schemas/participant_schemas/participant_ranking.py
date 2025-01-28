@@ -1,9 +1,9 @@
 from pydantic import BaseModel
 
 class ParticipantRanking(BaseModel):
-    id: int
+    id: str
     username: str
-    url_imgae: str
+    url_imgae: str | None
     user_id: str
     points: int
     win: int

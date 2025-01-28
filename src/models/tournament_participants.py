@@ -9,7 +9,7 @@ class TournamentParticipants(SQLModel, table=True):
     participant_id: str = Field(foreign_key='participants.id', index=True)
     tournament_id: str = Field(foreign_key='tournaments.id')
     final_position: int | None = Field()
-    points: int | None = Field()
+    points: int = Field(default=0)
     confirm: bool = Field(default=False)
     participant: Optional["Participant"] = Relationship(back_populates="tournaments")
     tournament: Optional["Tournament"] = Relationship(back_populates="participants")

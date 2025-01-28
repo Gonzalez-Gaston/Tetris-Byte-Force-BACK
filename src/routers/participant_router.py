@@ -61,7 +61,7 @@ async def participant_update(
 ):
     return await ParticipantService(session).participant_update(user, image, ParticipantUpdate(first_name=first_name, last_name=last_name, date_of_birth=date_of_birth))
 
-@participant_router.put('/get_ranking')
+@participant_router.get('/get_ranking')
 async def get_ranking(
     session: AsyncSession = Depends(db.get_session),
 ):
