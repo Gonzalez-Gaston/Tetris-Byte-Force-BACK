@@ -694,9 +694,8 @@ class TournamentService:
             participants: List[Participant] = (await self.session.exec(sttmt_part)).all()
 
             for index, participant in enumerate(participants):
-                if len(participant.tournaments) == 0:
-                    self.session.add(TournamentParticipants(participant_id= participant.id, tournament_id= tournament_id, confirm= True))
-                if index == limite:
+                self.session.add(TournamentParticipants(participant_id= participant.id, tournament_id= tournament_id, confirm= True))
+                if index == limite-1:
                     break
 
             await self.session.commit()
