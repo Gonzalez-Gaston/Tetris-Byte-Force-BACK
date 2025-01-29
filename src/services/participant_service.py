@@ -265,3 +265,43 @@ class ParticipantService:
         except Exception as e:
             print(e)
             raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "Error al intentar obtener ranking")
+        
+    async def get_participant(self, user: UserFull):
+        try:
+            sttmt = (
+                select(
+                    Participant.id,
+                    Participant.username.label("username"),
+                    Participant.url_image.label("url_image"),
+                    Participant.user_id.label("user_id"),
+                    func.sum(TournamentParticipants.points).label("points"),
+                    func.sum(TournamentParticipants.win).label("win"),
+                    func.sum(TournamentParticipants.lose).label("lose"),
+                )
+                .join(Participant, Participant.id == TournamentParticipants.participant_id)
+                .group_by(
+                    TournamentParticipants.participant_id,
+                    Participant.username,
+                    Participant.url_image,
+                    Participant.user_id,
+                )
+            )
+
+            participant = (await self.session.exec(sttmt)).first()
+
+            if participant is None:
+                return JSONResponse(
+                    content={
+                        "detail": "Usuario no encontrado", 
+                    },
+                    status_code= status.HTTP_404_NOT_FOUND
+                )
+
+            return JSONResponse(
+                content={
+                    "participant": participant.model_dump()
+                },
+                status_code= status.HTTP_200_OK
+            )
+        except Exception as e:
+            raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "Error al intentar obtener usuario")
