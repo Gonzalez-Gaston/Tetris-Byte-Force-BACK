@@ -8,14 +8,15 @@ from src.models.cloudinary_model import CloudinaryModel
 from src.models.participant_model import Participant
 from src.models.tournament_participants import TournamentParticipants
 from src.models.tournaments import StatusTournament, Tournament
+from src.schemas.participant_schemas.participant_data import ParticipantData
 from src.schemas.participant_schemas.participant_ranking import ParticipantRanking
 from src.schemas.participant_schemas.participant_update import ParticipantUpdate
-from sqlmodel import select, or_
+from sqlmodel import case, select, or_
 from sqlmodel.ext.asyncio.session import AsyncSession
 from fastapi.responses import JSONResponse
 from src.schemas.tournament_schemas.tournament_inscription import InscriptionDTO, TournamentInsc, TournamentInscription
 from src.schemas.user_schema.user_full import UserFull
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import selectinload, joinedload
 
 user_router = APIRouter()
 
@@ -235,6 +236,9 @@ class ParticipantService:
                     func.sum(TournamentParticipants.points).label("points"),
                     func.sum(TournamentParticipants.win).label("win"),
                     func.sum(TournamentParticipants.lose).label("lose"),
+                    func.count(
+                        case((TournamentParticipants.final_position == 'Ganador', 1), else_=None)
+                    ).label("tournaments_win")
                 )
                 .join(Participant, Participant.id == TournamentParticipants.participant_id)
                 .group_by(
@@ -257,6 +261,7 @@ class ParticipantService:
                     points=int(row.points or 0),
                     win=int(row.win or 0),
                     lose=int(row.lose or 0),
+                    tournaments_win=int(row.tournaments_win or 0)
                 ).model_dump()
                 for row in results
             ]
@@ -266,40 +271,45 @@ class ParticipantService:
             print(e)
             raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "Error al intentar obtener ranking")
         
-    async def get_participant(self, user: UserFull):
+    async def get_participant_data(self, participant_id: str):
         try:
             sttmt = (
                 select(
                     Participant.id,
-                    Participant.username.label("username"),
-                    Participant.url_image.label("url_image"),
-                    Participant.user_id.label("user_id"),
+                    Participant.username,
+                    Participant.first_name,
+                    Participant.last_name,
+                    Participant.url_image,
+                    Participant.user_id,
                     func.sum(TournamentParticipants.points).label("points"),
                     func.sum(TournamentParticipants.win).label("win"),
                     func.sum(TournamentParticipants.lose).label("lose"),
+                    func.count(
+                        case((TournamentParticipants.final_position == 'Ganador', 1), else_=None)
+                    ).label("tournaments_win")
                 )
-                .join(Participant, Participant.id == TournamentParticipants.participant_id)
-                .group_by(
-                    TournamentParticipants.participant_id,
-                    Participant.username,
-                    Participant.url_image,
-                    Participant.user_id,
-                )
+                .join(TournamentParticipants, Participant.id == TournamentParticipants.participant_id)
+                .where(TournamentParticipants.participant_id == participant_id)
             )
 
             participant = (await self.session.exec(sttmt)).first()
 
-            if participant is None:
-                return JSONResponse(
-                    content={
-                        "detail": "Usuario no encontrado", 
-                    },
-                    status_code= status.HTTP_404_NOT_FOUND
-                )
+            participant_data: ParticipantData = ParticipantData(
+                id=participant.id,
+                username=participant.username,
+                first_name=participant.first_name,
+                last_name=participant.last_name,
+                url_image=participant.url_image,
+                user_id=participant.user_id,
+                points=int(participant.points or 0),
+                win=int(participant.win or 0),
+                lose=int(participant.lose or 0),
+                tournaments_win=int(participant.tournaments_win or 0)
+            )
 
             return JSONResponse(
                 content={
-                    "participant": participant.model_dump()
+                    "participant": participant_data.model_dump()
                 },
                 status_code= status.HTTP_200_OK
             )

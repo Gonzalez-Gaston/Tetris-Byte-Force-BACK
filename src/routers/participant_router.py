@@ -67,6 +67,13 @@ async def get_ranking(
 ):
     return await ParticipantService(session).get_ranking()
 
+@participant_router.get('/get_participant_data/{participant_id}')
+async def get_participant_data(
+    participant_id: str,
+    session: AsyncSession = Depends(db.get_session),
+):
+    return await ParticipantService(session).get_participant_data(participant_id)
+
 
 ############################### PUT ###############################
 

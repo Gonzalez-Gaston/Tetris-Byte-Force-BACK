@@ -13,6 +13,7 @@ from src.models.tournaments import StatusTournament, Tournament, TypeTournament
 from src.models.user_model import User
 from src.schemas.organizer_schemas.organizer_dto import OrganizerDTO
 from src.schemas.participant_schemas.participant_dto import ConjuntInscriptionDTO, ParticipantDTO, TournamentParticipantDTO
+from src.schemas.participant_schemas.participant_result_tour import ParticipantResultTour
 from src.schemas.tournament_schemas.data_update import DataUpdate
 from src.schemas.tournament_schemas.tournament_create import TournamentCreate
 from src.schemas.tournament_schemas.tournament_dto import TournamentDTO
@@ -391,7 +392,7 @@ class TournamentService:
                 "id": list_uuid[index],
                 "name": name if double and base_num == 1 else (name if not double and base_num in [2,1] else f"Round {round_number}"),
                 "nextMatchId": get_uuid,
-                "tournamentRoundText": list_uuid[index],#str(index+1),
+                "tournamentRoundText": name if double and base_num == 1 else (name if not double and base_num in [2,1] else f"Round {round_number}"),#str(index+1),
                 "startTime": str(datetime.now().date()),
                 "state": 'SCHEDULED',
                 "participants": [
@@ -758,4 +759,37 @@ class TournamentService:
         except Exception as e:
             raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "Error al intentar obtener torneo")
 
+    async def get_result_tournament(self, tournament_id: str):
+        try:
+            stmt = (
+                select(TournamentParticipants)
+                .options(
+                    joinedload(TournamentParticipants.participant)
+                )
+                .where(TournamentParticipants.tournament_id == tournament_id)
+            )
 
+            tournament_participants: List[TournamentParticipants] = (await self.session.exec(stmt)).unique().all()
+
+            list_participants: List[ParticipantResultTour] = [
+                ParticipantResultTour(
+                    **participant.participant.model_dump(),
+                    final_position= participant.final_position or None,
+                    points= participant.points,
+                    win= participant.win,
+                    lose= participant.lose,
+                ).model_dump()
+                for participant in tournament_participants
+            ]
+
+            return JSONResponse(
+                content={"result_tournament": sorted(list_participants, key=lambda x: x['points'], reverse=True)},
+                status_code=status.HTTP_200_OK
+            )
+
+        except Exception as e:
+            print(f"Error al obtener torneos: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Error al intentar obtener torneos"
+            )

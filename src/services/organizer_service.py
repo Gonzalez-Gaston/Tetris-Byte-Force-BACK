@@ -9,11 +9,13 @@ from src.models.participant_model import Participant
 from src.models.tournament_participants import TournamentParticipants
 from src.models.tournaments import Tournament
 from src.schemas.organizer_schemas.organizer_ban import OrganizerBan
+from src.schemas.organizer_schemas.organizer_data import OrganizerData
 from src.schemas.organizer_schemas.organizer_update import OrganizerUpdate
 from sqlmodel.ext.asyncio.session import AsyncSession
 from fastapi.responses import JSONResponse
 from src.schemas.tournament_schemas.tournament_name import TournamentName
 from src.schemas.user_schema.user_full import UserFull
+from sqlalchemy.orm import selectinload, joinedload
 
 user_router = APIRouter()
 
@@ -120,4 +122,35 @@ class OrganizerService:
             )
         except Exception as e:
             raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, 'Error al banear usuario.')
+        
+
+    async def get_organizer_data(self, organizer_id: str):
+        try:
+            sttmt = (
+                select(
+                    Organizer
+                ).options(joinedload(Organizer.tournaments))
+                .where(Organizer.id == organizer_id)
+            )
+
+            organizer: Organizer = (await self.session.exec(sttmt)).first()
+
+            if organizer is None:
+                return JSONResponse(
+                    status_code= status.HTTP_404_NOT_FOUND, 
+                    content={
+                        "detail": "Organizador no encontrado."
+                    }
+                )
+
+            organizer_data: OrganizerData = OrganizerData(**organizer.model_dump(), tournaments_created= len(organizer.tournaments))
+
+            return JSONResponse(
+                content={
+                    "organizer": organizer_data.model_dump()
+                },
+                status_code= status.HTTP_200_OK
+            )
+        except Exception as e:
+            raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "Error al intentar obtener usuario")
     
