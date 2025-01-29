@@ -280,7 +280,7 @@ class TournamentService:
                     participant_tour.points = results[participant]['points']
                     participant_tour.win = results[participant]['win']
                     participant_tour.lose = results[participant]['lose']
-                    # participant_tour.final_position = results[participant]['position']
+                    participant_tour.final_position = results[participant]['position']
 
             tournament.is_open = False
 
