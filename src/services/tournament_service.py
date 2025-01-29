@@ -510,7 +510,7 @@ class TournamentService:
                     "name": "Final 2",
                     "nextMatchId": None,
                     "nextLooserMatchId": None,
-                    "tournamentRoundText": str(len(losers)+len(matchups_winner)),
+                    "tournamentRoundText": str(len(losers)+len(matchups_winner)+1),
                     "startTime": str(len(losers)+len(matchups_winner)),
                     "state": None,
                     "participants": [
@@ -651,7 +651,6 @@ class TournamentService:
 
     async def finished_tournament(self, number_participants: int, data: str, type: TypeTournament):
         try:
-
             participants = {}
 
             matchups = json.loads(data)
@@ -670,7 +669,7 @@ class TournamentService:
                     for participant in matchs['participants']:
                         if participant['id'] is None: continue
                         if not participant['id'] in participants:
-                          participants[participant['id']] = {'points': None, 'win': 0, 'lose': 0, 'position': None}
+                          participants[participant['id']] = {'points': 0, 'win': 0, 'lose': 0, 'position': None}
                         participants[participant['id']]['win' if participant['isWinner'] == True else 'lose'] += 1
                         if participant['isWinner'] == False:
                             if matchs['name'] == 'Final':
@@ -682,6 +681,7 @@ class TournamentService:
                         if matchs['name'] == 'Final' and participant['isWinner'] == True:
                             participants[participant['id']]['points'] = list_points['Final G']['point']
                             participants[participant['id']]['position'] = 'Ganador'
+
             elif type == TypeTournament.DOUBLE:
                 points = {
                     64: {'Final G': {'point': 1200}, 'Final P': {'point': 1000}, 'Losers Round 10': {'point': 700}, 'Losers Round 9': {'point': 600}, 'Losers Round 8': {'point': 500}, 'Losers Round 7': {'point': 400}, 'Losers Round 6': {'point': 300}, 'Losers Round 5': {'point': 200}, 'Losers Round 4': {'point': 100}, 'Losers Round 3': {'point': 50}, 'Losers Round 2': {'point': 25}, 'Losers Round 1': {'point': 0}},
@@ -696,16 +696,16 @@ class TournamentService:
                     for participant in matchs['participants']:
                         if participant['id'] is None: continue
                         if not participant['id'] in participants:
-                            participants[participant['id']] = {'points': None, 'win': 0, 'lose': 0, 'position': None}
+                            participants[participant['id']] = {'points': 0, 'win': 0, 'lose': 0, 'position': None}
                         participants[participant['id']]['win' if participant['isWinner'] == True else 'lose'] += 1
-                        if matchs['name'] == 'Final 1' and matchups['upper'][-1]['status'] == 'CANCEL FINAL':
+                        if matchs['name'] == 'Final 1' and matchups['upper'][-1]['state'] == 'CANCEL FINAL':
                             if participant['isWinner'] == True:
                                 participants[participant['id']]['points'] = list_points['Final G']['point']
                                 participants[participant['id']]['position'] = 'Ganador'
                             else:
                                 participants[participant['id']]['points'] = list_points['Final P']['point']
                                 participants[participant['id']]['position'] = 'Finalista'
-                        if matchs['name'] == 'Final 2' and matchs['status'] == 'Done':
+                        if matchs['name'] == 'Final 2' and matchs['state'] == 'DONE':
                             if participant['isWinner'] == True:
                                 participants[participant['id']]['points'] = list_points['Final G']['point']
                                 participants[participant['id']]['position'] = 'Ganador'
