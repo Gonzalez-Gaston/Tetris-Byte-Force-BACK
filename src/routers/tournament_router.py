@@ -76,6 +76,12 @@ async def get_name_tournaments(
 ):
     return await TournamentService(session).get_tournament(id)
 
+@tournament_router.get('/get_result_tournament/{tournament_id}')
+async def get_result_tournament(
+    tournament_id: str,
+    session: AsyncSession = Depends(db.get_session),
+):
+    return await TournamentService(session).get_result_tournament(tournament_id)
 
 
 

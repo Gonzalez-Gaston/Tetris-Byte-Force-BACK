@@ -8,6 +8,7 @@ class ParticipantRanking(BaseModel):
     points: int
     win: int
     lose: int
+    tournaments_win: int | None
 
     class Config:
         from_attributes = True

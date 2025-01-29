@@ -23,6 +23,13 @@ async def get_tournaments_created(
 ):
     return await OrganizerService(session).get_tournaments_created(user)
 
+@organizer_router.get('/get_organizer_data/{organizer_id}')
+async def get_organizer_data(
+    organizer_id: str,
+    session: AsyncSession = Depends(db.get_session),
+):
+    return await OrganizerService(session).get_organizer_data(organizer_id)
+
 @organizer_router.post('/ban_participant', status_code= status.HTTP_204_NO_CONTENT)
 @authorization(roles=[RoleUser.ORGANIZER])
 async def ban_participant(
