@@ -9,6 +9,7 @@ from src.routers.user_router import user_router
 from src.routers.organizer_router import organizer_router
 from src.routers.tournament_router import tournament_router
 from src.routers.participant_router import participant_router
+from src.routers.websocket_router import websocket_router
 
 # db = DataBase()
 
@@ -24,12 +25,9 @@ app.include_router(router= user_router)
 app.include_router(router= organizer_router)
 app.include_router(router= tournament_router)
 app.include_router(router= participant_router)
+app.include_router(router= websocket_router)
 
 origins = [
-    # "http://localhost.tiangolo.com",
-    # "https://localhost.tiangolo.com",
-    # "http://localhost",
-    # "http://localhost:8080",
     '*'
 ]
 
@@ -55,7 +53,6 @@ async def lifespan(app: FastAPI):
             logging.error(f"Error al conectar a la base de datos: {e}")
             raise e
     await db.create_tables()
-
     yield
     if not db.is_closed():
         await db.close()
