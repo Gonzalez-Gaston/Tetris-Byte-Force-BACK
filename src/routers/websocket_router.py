@@ -23,11 +23,11 @@ async def websocket_endpoint(websocket: WebSocket):
                 if event_type == "notification":
                     await manager.broadcast(
                         {
-                            "event": "create_tournament", 
+                            "event": "Nueva notificación", 
                             "message": payload,
                         }
                     )
-                    
+
     except WebSocketDisconnect:
         manager.disconnect(websocket)
 
