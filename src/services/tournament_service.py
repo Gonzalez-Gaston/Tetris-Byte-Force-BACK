@@ -75,7 +75,10 @@ class TournamentService:
                     joinedload(Tournament.organizer), joinedload(Tournament.participants)
                     ).where(Tournament.status == status_filter)
 
-            tournaments: List[Tournament] = (await self.session.exec(stmt)).unique().all()
+            # tournaments: List[Tournament] = (await self.session.exec(stmt)).unique().all()
+            # tournaments: List[Tournament] = await self.session.exec(stmt)
+            tournaments: List[Tournament] = self.session.exec(stmt)
+
 
             list_tour: List[TournamentDTO] = [
                 TournamentDTO(
