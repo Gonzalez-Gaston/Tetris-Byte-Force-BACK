@@ -95,3 +95,10 @@ Documentación Redoc
 ```sh
 http://127.0.0.1:8000/redoc
 ```
+## Analisis y Diseño
+
+# Acceso a la documentacion 
+
+```sh
+https://drive.google.com/drive/folders/1u8Yvyp1ZSWp1e7H4UEzOpGF0eeJ6mfAZ?usp=sharing
+```
