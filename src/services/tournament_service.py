@@ -23,7 +23,8 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import selectinload, joinedload
 import random
-
+from src.routers.websocket_router import manager
+from src.schemas.tournament_schemas.tournament_socket import TournamentSocket
 from src.schemas.tournament_schemas.tournament_update import TournamentUpdate
 from src.schemas.user_schema.user_full import UserFull
 
@@ -56,6 +57,24 @@ class TournamentService:
             self.session.add(new_tournament)
 
             await self.session.commit()
+
+            await manager.broadcast(
+                        {
+                            "event": "create_tournament", 
+                            "tournament":{
+                                "id": new_tournament.id,
+                                "name": new_tournament.name,
+                                "start": new_tournament.start.isoformat()
+                            },
+                            "message": "Nuevo torneo creado",
+                        }
+                    )
+            
+            await manager.add_tournament(TournamentSocket(
+                id= new_tournament.id,
+                name= new_tournament.name,
+                start= new_tournament.start
+            ))
 
             return JSONResponse(
                 content={
@@ -287,6 +306,18 @@ class TournamentService:
 
             await self.session.commit()
 
+            await manager.broadcast(
+                        {
+                            "event": "update_tournament", 
+                            "tournament":{
+                                "id": tournament.id,
+                                "name": tournament.name,
+                                "start": tournament.start.isoformat()
+                            },
+                            "message": f"Actualización: {status_tour}",
+                        }
+                    )
+
             return JSONResponse(
                 content={
                     "detail": "Datos del torneo actualizdo con éxito!",
@@ -390,7 +421,7 @@ class TournamentService:
           
             match = {
                 "id": list_uuid[index],
-                "name": name if double and base_num == 1 else (name if not double and base_num in [2,1] else f"Round {round_number}"),
+                "name": name if double and base_num == 1 else (name if not double and base_num in [2,1] else f"{round_number}"),
                 "nextMatchId": get_uuid,
                 "tournamentRoundText": name if double and base_num == 1 else (name if not double and base_num in [2,1] else f"Round {round_number}"),#str(index+1),
                 "startTime": str(datetime.now().date()),
