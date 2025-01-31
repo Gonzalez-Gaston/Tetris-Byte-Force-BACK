@@ -421,7 +421,7 @@ class TournamentService:
           
             match = {
                 "id": list_uuid[index],
-                "name": name if double and base_num == 1 else (name if not double and base_num in [2,1] else f"{round_number}"),
+                "name": name if double and base_num == 1 else (name if not double and base_num in [2,1] else f"Round {round_number}"),
                 "nextMatchId": get_uuid,
                 "tournamentRoundText": name if double and base_num == 1 else (name if not double and base_num in [2,1] else f"Round {round_number}"),#str(index+1),
                 "startTime": str(datetime.now().date()),
