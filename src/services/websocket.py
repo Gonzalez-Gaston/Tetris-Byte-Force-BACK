@@ -28,8 +28,10 @@ class ConnectionManager:
 
     async def broadcast(self, message: dict):
         for connection in self.active_connections:
-            await connection.send_json(message)
-
+            try:
+                await connection.send_json(message)
+            except Exception as e:
+                print(e)
     async def monitor_tournaments(self):
         while True:
             now = datetime.now()
